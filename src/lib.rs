@@ -166,6 +166,8 @@ pub struct Node {
     pub rotation: Option<[f32; 4]>,
     pub scale: Option<[f32; 3]>,
     pub translation: Option<[f32; 3]>,
+    #[nserde(default)]
+    pub extensions: NodeExtensions,
     // missing: weights
 }
 
@@ -202,6 +204,12 @@ pub enum NodeTransform {
         rotation: [f32; 4],
         scale: [f32; 3],
     },
+}
+
+#[derive(Debug, DeJson, Default)]
+pub struct NodeExtensions {
+    #[nserde(rename = "EXT_mesh_gpu_instancing")]
+    pub ext_mesh_gpu_instancing: Option<extensions::ExtMeshGpuInstancing>,
 }
 
 #[derive(Debug, DeJson)]
@@ -774,5 +782,20 @@ pub mod extensions {
     pub struct ExtMeshoptCompressionBuffer {
         #[nserde(default)]
         pub fallback: bool,
+    }
+
+    #[derive(Debug, DeJson)]
+    pub struct ExtMeshGpuInstancing {
+        attributes: ExtMeshGpuInstancingAttributes,
+    }
+
+    #[derive(Debug, DeJson)]
+    pub struct ExtMeshGpuInstancingAttributes {
+        #[nserde(rename = "ROTATION")]
+        rotation: usize,
+        #[nserde(rename = "SCALE")]
+        scale: usize,
+        #[nserde(rename = "TRANSLATION")]
+        translation: usize,
     }
 }
