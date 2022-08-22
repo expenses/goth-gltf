@@ -145,6 +145,14 @@ pub struct Buffer {
     pub uri: Option<String>,
     #[nserde(rename = "byteLength")]
     pub byte_length: usize,
+    #[nserde(default)]
+    pub extensions: BufferExtensions,
+}
+
+#[derive(Debug, DeJson, Default)]
+pub struct BufferExtensions {
+    #[nserde(rename = "EXT_meshopt_compression")]
+    pub ext_meshopt_compression: Option<extensions::ExtMeshoptCompressionBuffer>,
 }
 
 #[derive(Debug, DeJson)]
@@ -734,7 +742,7 @@ pub mod extensions {
         pub filter: CompressionFilter,
     }
 
-    #[derive(Debug, DeJson, PartialEq, Eq)]
+    #[derive(Debug, DeJson, PartialEq, Eq, Clone, Copy)]
     pub enum CompressionMode {
         #[nserde(rename = "ATTRIBUTES")]
         Attributes,
@@ -744,7 +752,7 @@ pub mod extensions {
         Indices,
     }
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, PartialEq, Eq, Clone, Copy)]
     pub enum CompressionFilter {
         #[nserde(rename = "NONE")]
         None,
@@ -760,5 +768,11 @@ pub mod extensions {
         fn default() -> Self {
             Self::None
         }
+    }
+
+    #[derive(Debug, DeJson)]
+    pub struct ExtMeshoptCompressionBuffer {
+        #[nserde(default)]
+        pub fallback: bool,
     }
 }
