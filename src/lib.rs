@@ -242,7 +242,7 @@ pub struct Attributes {
     pub weights_0: Option<usize>,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, Clone)]
 pub struct Image {
     pub uri: Option<String>,
     #[nserde(rename = "mimeType")]
@@ -786,16 +786,16 @@ pub mod extensions {
 
     #[derive(Debug, DeJson)]
     pub struct ExtMeshGpuInstancing {
-        attributes: ExtMeshGpuInstancingAttributes,
+        pub attributes: ExtMeshGpuInstancingAttributes,
     }
 
     #[derive(Debug, DeJson)]
     pub struct ExtMeshGpuInstancingAttributes {
         #[nserde(rename = "ROTATION")]
-        rotation: usize,
+        pub rotation: usize,
         #[nserde(rename = "SCALE")]
-        scale: usize,
+        pub scale: usize,
         #[nserde(rename = "TRANSLATION")]
-        translation: usize,
+        pub translation: usize,
     }
 }
