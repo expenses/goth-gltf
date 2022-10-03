@@ -5,4 +5,4 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-nanoserde = "0.1.30"
+nanoserde = { git = "https://github.com/expenses/nanoserde", branch = "goth-gltf-custom-generics" }

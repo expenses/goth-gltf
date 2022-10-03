@@ -1,20 +1,31 @@
 #![allow(clippy::question_mark)]
 
 use nanoserde::DeJson;
+use std::fmt::Debug;
+
+pub trait Extensions {
+    type RootExtensions: DeJson + Default + Debug + Clone;
+    type TextureExtensions: DeJson + Default + Debug + Clone;
+    type TextureInfoExtensions: DeJson + Default + Debug + Clone;
+    type MaterialExtensions: DeJson + Default + Debug + Clone;
+    type BufferExtensions: DeJson + Default + Debug + Clone;
+    type NodeExtensions: DeJson + Default + Debug + Clone;
+    type BufferViewExtensions: DeJson + Default + Debug + Clone;
+}
 
 #[derive(Debug, DeJson)]
-pub struct Gltf {
+pub struct Gltf<E: Extensions> {
     #[nserde(default)]
     pub images: Vec<Image>,
     #[nserde(default)]
-    pub textures: Vec<Texture>,
+    pub textures: Vec<Texture<E>>,
     #[nserde(default)]
-    pub materials: Vec<Material>,
+    pub materials: Vec<Material<E>>,
     #[nserde(default)]
-    pub buffers: Vec<Buffer>,
+    pub buffers: Vec<Buffer<E>>,
     #[nserde(rename = "bufferViews")]
     #[nserde(default)]
-    pub buffer_views: Vec<BufferView>,
+    pub buffer_views: Vec<BufferView<E>>,
     #[nserde(default)]
     pub accessors: Vec<Accessor>,
     #[nserde(default)]
@@ -22,7 +33,7 @@ pub struct Gltf {
     #[nserde(default)]
     pub animations: Vec<Animation>,
     #[nserde(default)]
-    pub nodes: Vec<Node>,
+    pub nodes: Vec<Node<E>>,
     #[nserde(default)]
     pub skins: Vec<Skin>,
     #[nserde(default)]
@@ -30,11 +41,11 @@ pub struct Gltf {
     #[nserde(default)]
     pub cameras: Vec<Camera>,
     #[nserde(default)]
-    pub extensions: Extensions,
+    pub extensions: E::RootExtensions,
 }
 
-impl Gltf {
-    pub fn from_bytes(bytes: &[u8]) -> Result<(Gltf, Option<&[u8]>), nanoserde::DeJsonErr> {
+impl<E: Extensions> Gltf<E> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<(Self, Option<&[u8]>), nanoserde::DeJsonErr> {
         // Check for the 4-byte magic.
         if !bytes.starts_with(b"glTF") {
             return Ok((Self::from_json_bytes(bytes)?, None));
@@ -70,12 +81,6 @@ impl Gltf {
     pub fn from_json_string(string: &str) -> Result<Self, nanoserde::DeJsonErr> {
         Self::deserialize_json(string)
     }
-}
-
-#[derive(Debug, DeJson, Default)]
-pub struct Extensions {
-    #[nserde(rename = "KHR_lights_punctual")]
-    pub khr_lights_punctual: Option<extensions::KhrLightsPunctual>,
 }
 
 #[derive(Debug, DeJson)]
@@ -141,22 +146,16 @@ pub enum TargetPath {
 }
 
 #[derive(Debug, DeJson)]
-pub struct Buffer {
+pub struct Buffer<E: Extensions> {
     pub uri: Option<String>,
     #[nserde(rename = "byteLength")]
     pub byte_length: usize,
     #[nserde(default)]
-    pub extensions: BufferExtensions,
-}
-
-#[derive(Debug, DeJson, Default)]
-pub struct BufferExtensions {
-    #[nserde(rename = "EXT_meshopt_compression")]
-    pub ext_meshopt_compression: Option<extensions::ExtMeshoptCompressionBuffer>,
+    pub extensions: E::BufferExtensions,
 }
 
 #[derive(Debug, DeJson)]
-pub struct Node {
+pub struct Node<E: Extensions> {
     pub camera: Option<usize>,
     #[nserde(default)]
     pub children: Vec<usize>,
@@ -167,11 +166,11 @@ pub struct Node {
     pub scale: Option<[f32; 3]>,
     pub translation: Option<[f32; 3]>,
     #[nserde(default)]
-    pub extensions: NodeExtensions,
+    pub extensions: E::NodeExtensions,
     // missing: weights
 }
 
-impl Node {
+impl<E: Extensions> Node<E> {
     pub fn transform(&self) -> NodeTransform {
         match self.matrix {
             Some(matrix) => match (self.translation, self.rotation, self.scale) {
@@ -204,12 +203,6 @@ pub enum NodeTransform {
         rotation: [f32; 4],
         scale: [f32; 3],
     },
-}
-
-#[derive(Debug, DeJson, Default)]
-pub struct NodeExtensions {
-    #[nserde(rename = "EXT_mesh_gpu_instancing")]
-    pub ext_mesh_gpu_instancing: Option<extensions::ExtMeshGpuInstancing>,
 }
 
 #[derive(Debug, DeJson)]
@@ -252,21 +245,15 @@ pub struct Image {
 }
 
 #[derive(Debug, DeJson)]
-pub struct Texture {
+pub struct Texture<E: Extensions> {
     pub sampler: Option<usize>,
     pub source: Option<usize>,
     #[nserde(default)]
-    pub extensions: TextureExtensions,
-}
-
-#[derive(Debug, Default, DeJson)]
-pub struct TextureExtensions {
-    #[nserde(rename = "KHR_texture_basisu")]
-    pub khr_texture_basisu: Option<extensions::KhrTextureBasisu>,
+    pub extensions: E::TextureExtensions,
 }
 
 #[derive(Debug, DeJson)]
-pub struct BufferView {
+pub struct BufferView<E: Extensions> {
     pub buffer: usize,
     #[nserde(rename = "byteOffset")]
     #[nserde(default)]
@@ -276,13 +263,7 @@ pub struct BufferView {
     #[nserde(rename = "byteStride")]
     pub byte_stride: Option<usize>,
     #[nserde(default)]
-    pub extensions: BufferViewExtensions,
-}
-
-#[derive(Debug, DeJson, Default)]
-pub struct BufferViewExtensions {
-    #[nserde(rename = "EXT_meshopt_compression")]
-    pub ext_meshopt_compression: Option<extensions::ExtMeshoptCompression>,
+    pub extensions: E::BufferViewExtensions,
 }
 
 #[derive(Debug, DeJson)]
@@ -304,7 +285,7 @@ pub struct Accessor {
 }
 
 impl Accessor {
-    pub fn byte_length(&self, buffer_view: &BufferView) -> usize {
+    pub fn byte_length<E: Extensions>(&self, buffer_view: &BufferView<E>) -> usize {
         self.count
             * buffer_view.byte_stride.unwrap_or_else(|| {
                 self.component_type.byte_size() * self.accessor_type.num_components()
@@ -387,17 +368,17 @@ impl AccessorType {
     }
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
-pub struct Material {
+#[derive(Debug, DeJson, Clone)]
+pub struct Material<E: Extensions> {
     #[nserde(rename = "pbrMetallicRoughness")]
     #[nserde(default)]
-    pub pbr_metallic_roughness: PbrMetallicRoughness,
+    pub pbr_metallic_roughness: PbrMetallicRoughness<E>,
     #[nserde(rename = "normalTexture")]
-    pub normal_texture: Option<NormalTextureInfo>,
+    pub normal_texture: Option<NormalTextureInfo<E>>,
     #[nserde(rename = "occlusionTexture")]
-    pub occlusion_texture: Option<OcclusionTextureInfo>,
+    pub occlusion_texture: Option<OcclusionTextureInfo<E>>,
     #[nserde(rename = "emissiveTexture")]
-    pub emissive_texture: Option<TextureInfo>,
+    pub emissive_texture: Option<TextureInfo<E>>,
     #[nserde(rename = "emissiveFactor")]
     #[nserde(default)]
     pub emissive_factor: [f32; 3],
@@ -411,7 +392,7 @@ pub struct Material {
     #[nserde(default)]
     pub double_sided: bool,
     #[nserde(default)]
-    pub extensions: MaterialExtensions,
+    pub extensions: E::MaterialExtensions,
 }
 
 #[derive(Debug, DeJson, Clone, Copy)]
@@ -430,25 +411,13 @@ impl Default for AlphaMode {
     }
 }
 
-#[derive(Debug, DeJson, Default, Clone, Copy)]
-pub struct MaterialExtensions {
-    #[nserde(rename = "KHR_materials_sheen")]
-    pub khr_materials_sheen: Option<extensions::KhrMaterialsSheen>,
-    #[nserde(rename = "KHR_materials_emissive_strength")]
-    pub khr_materials_emissive_strength: Option<extensions::KhrMaterialsEmissiveStrength>,
-    #[nserde(rename = "KHR_materials_unlit")]
-    pub khr_materials_unlit: Option<extensions::KhrMaterialsUnlit>,
-    #[nserde(rename = "KHR_materials_ior")]
-    pub khr_materials_ior: Option<extensions::KhrMaterialsIor>,
-}
-
-#[derive(Debug, DeJson, Default, Clone, Copy)]
-pub struct PbrMetallicRoughness {
+#[derive(Debug, DeJson, Clone)]
+pub struct PbrMetallicRoughness<E: Extensions> {
     #[nserde(rename = "baseColorFactor")]
     #[nserde(default = "[1.0, 1.0, 1.0, 1.0]")]
     pub base_color_factor: [f32; 4],
     #[nserde(rename = "baseColorTexture")]
-    pub base_color_texture: Option<TextureInfo>,
+    pub base_color_texture: Option<TextureInfo<E>>,
     #[nserde(rename = "metallicFactor")]
     #[nserde(default = "1.0")]
     pub metallic_factor: f32,
@@ -456,21 +425,33 @@ pub struct PbrMetallicRoughness {
     #[nserde(default = "1.0")]
     pub roughness_factor: f32,
     #[nserde(rename = "metallicRoughnessTexture")]
-    pub metallic_roughness_texture: Option<TextureInfo>,
+    pub metallic_roughness_texture: Option<TextureInfo<E>>,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
-pub struct TextureInfo {
+impl<E: Extensions> Default for PbrMetallicRoughness<E> {
+    fn default() -> Self {
+        Self {
+            base_color_factor: [1.0; 4],
+            base_color_texture: None,
+            metallic_factor: 1.0,
+            roughness_factor: 1.0,
+            metallic_roughness_texture: None,
+        }
+    }
+}
+
+#[derive(Debug, DeJson, Clone)]
+pub struct TextureInfo<E: Extensions> {
     pub index: usize,
     #[nserde(rename = "texCoord")]
     #[nserde(default)]
     pub tex_coord: usize,
     #[nserde(default)]
-    pub extensions: TextureInfoExtensions,
+    pub extensions: E::TextureInfoExtensions,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
-pub struct NormalTextureInfo {
+#[derive(Debug, DeJson, Clone)]
+pub struct NormalTextureInfo<E: Extensions> {
     pub index: usize,
     #[nserde(rename = "texCoord")]
     #[nserde(default)]
@@ -478,11 +459,11 @@ pub struct NormalTextureInfo {
     #[nserde(default = "1.0")]
     pub scale: f32,
     #[nserde(default)]
-    pub extensions: TextureInfoExtensions,
+    pub extensions: E::TextureInfoExtensions,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
-pub struct OcclusionTextureInfo {
+#[derive(Debug, DeJson, Clone)]
+pub struct OcclusionTextureInfo<E: Extensions> {
     pub index: usize,
     #[nserde(rename = "texCoord")]
     #[nserde(default)]
@@ -490,13 +471,7 @@ pub struct OcclusionTextureInfo {
     #[nserde(default = "1.0")]
     pub strength: f32,
     #[nserde(default)]
-    pub extensions: TextureInfoExtensions,
-}
-
-#[derive(Debug, DeJson, Default, Clone, Copy)]
-pub struct TextureInfoExtensions {
-    #[nserde(rename = "KHR_texture_transform")]
-    pub khr_texture_transform: Option<extensions::KhrTextureTransform>,
+    pub extensions: E::TextureInfoExtensions,
 }
 
 #[derive(Debug, DeJson)]
@@ -637,7 +612,7 @@ pub struct CameraPerspective {
     pub aspect_ratio: Option<f32>,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, Clone, Copy)]
 pub struct CameraOrthographic {
     pub xmag: f32,
     pub ymag: f32,
@@ -646,10 +621,10 @@ pub struct CameraOrthographic {
 }
 
 pub mod extensions {
-    use crate::TextureInfo;
+    use crate::{Extensions, TextureInfo};
     use nanoserde::DeJson;
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone, Copy)]
     pub struct KhrTextureBasisu {
         pub source: usize,
     }
@@ -667,18 +642,18 @@ pub mod extensions {
         pub tex_coord: usize,
     }
 
-    #[derive(Debug, DeJson, Clone, Copy)]
-    pub struct KhrMaterialsSheen {
+    #[derive(Debug, DeJson, Clone)]
+    pub struct KhrMaterialsSheen<E: Extensions> {
         #[nserde(rename = "sheenColorFactor")]
         #[nserde(default)]
         pub sheen_color_factor: [f32; 3],
         #[nserde(rename = "sheenColorTexture")]
-        pub sheen_color_texture: Option<TextureInfo>,
+        pub sheen_color_texture: Option<TextureInfo<E>>,
         #[nserde(rename = "sheenRoughnessFactor")]
         #[nserde(default)]
         pub sheen_roughness_factor: f32,
         #[nserde(rename = "sheenRoughnessTexture")]
-        pub sheen_roughness_texture: Option<TextureInfo>,
+        pub sheen_roughness_texture: Option<TextureInfo<E>>,
     }
 
     #[derive(Debug, DeJson, Clone, Copy)]
@@ -691,13 +666,13 @@ pub mod extensions {
     #[derive(Debug, DeJson, Clone, Copy)]
     pub struct KhrMaterialsUnlit {}
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone)]
     pub struct KhrLightsPunctual {
         #[nserde(default)]
         pub lights: Vec<Light>,
     }
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone, Copy)]
     pub struct Light {
         #[nserde(default = "[1.0, 1.0, 1.0]")]
         pub color: [f32; 3],
@@ -708,7 +683,7 @@ pub mod extensions {
         pub spot: Option<LightSpot>,
     }
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone, Copy)]
     pub enum LightType {
         #[nserde(rename = "point")]
         Point,
@@ -718,7 +693,7 @@ pub mod extensions {
         Spot,
     }
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone, Copy)]
     pub struct LightSpot {
         #[nserde(rename = "innerConeAngle")]
         #[nserde(default)]
@@ -734,7 +709,7 @@ pub mod extensions {
         pub ior: f32,
     }
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone, Copy)]
     pub struct ExtMeshoptCompression {
         pub buffer: usize,
         #[nserde(rename = "byteOffset")]
@@ -778,18 +753,18 @@ pub mod extensions {
         }
     }
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone, Copy)]
     pub struct ExtMeshoptCompressionBuffer {
         #[nserde(default)]
         pub fallback: bool,
     }
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone, Copy)]
     pub struct ExtMeshGpuInstancing {
         pub attributes: ExtMeshGpuInstancingAttributes,
     }
 
-    #[derive(Debug, DeJson)]
+    #[derive(Debug, DeJson, Clone, Copy)]
     pub struct ExtMeshGpuInstancingAttributes {
         #[nserde(rename = "ROTATION")]
         pub rotation: usize,
@@ -797,5 +772,71 @@ pub mod extensions {
         pub scale: usize,
         #[nserde(rename = "TRANSLATION")]
         pub translation: usize,
+    }
+}
+
+pub mod default_extensions {
+    use crate::extensions;
+    use nanoserde::DeJson;
+
+    #[derive(Debug, Default, Clone, Copy)]
+    pub struct Extensions;
+
+    impl super::Extensions for Extensions {
+        type RootExtensions = RootExtensions;
+        type TextureExtensions = TextureExtensions;
+        type TextureInfoExtensions = TextureInfoExtensions;
+        type MaterialExtensions = MaterialExtensions<Self>;
+        type BufferExtensions = BufferExtensions;
+        type NodeExtensions = NodeExtensions;
+        type BufferViewExtensions = BufferViewExtensions;
+    }
+
+    #[derive(Debug, DeJson, Default, Clone)]
+    pub struct RootExtensions {
+        #[nserde(rename = "KHR_lights_punctual")]
+        pub khr_lights_punctual: Option<extensions::KhrLightsPunctual>,
+    }
+
+    #[derive(Debug, DeJson, Default, Clone)]
+    pub struct BufferExtensions {
+        #[nserde(rename = "EXT_meshopt_compression")]
+        pub ext_meshopt_compression: Option<extensions::ExtMeshoptCompressionBuffer>,
+    }
+
+    #[derive(Debug, DeJson, Default, Clone)]
+    pub struct NodeExtensions {
+        #[nserde(rename = "EXT_mesh_gpu_instancing")]
+        pub ext_mesh_gpu_instancing: Option<extensions::ExtMeshGpuInstancing>,
+    }
+
+    #[derive(Debug, Default, DeJson, Clone)]
+    pub struct TextureExtensions {
+        #[nserde(rename = "KHR_texture_basisu")]
+        pub khr_texture_basisu: Option<extensions::KhrTextureBasisu>,
+    }
+
+    #[derive(Debug, DeJson, Default, Clone)]
+    pub struct BufferViewExtensions {
+        #[nserde(rename = "EXT_meshopt_compression")]
+        pub ext_meshopt_compression: Option<extensions::ExtMeshoptCompression>,
+    }
+
+    #[derive(Debug, DeJson, Default, Clone)]
+    pub struct MaterialExtensions<E: super::Extensions> {
+        #[nserde(rename = "KHR_materials_sheen")]
+        pub khr_materials_sheen: Option<extensions::KhrMaterialsSheen<E>>,
+        #[nserde(rename = "KHR_materials_emissive_strength")]
+        pub khr_materials_emissive_strength: Option<extensions::KhrMaterialsEmissiveStrength>,
+        #[nserde(rename = "KHR_materials_unlit")]
+        pub khr_materials_unlit: Option<extensions::KhrMaterialsUnlit>,
+        #[nserde(rename = "KHR_materials_ior")]
+        pub khr_materials_ior: Option<extensions::KhrMaterialsIor>,
+    }
+
+    #[derive(Debug, DeJson, Default, Clone, Copy)]
+    pub struct TextureInfoExtensions {
+        #[nserde(rename = "KHR_texture_transform")]
+        pub khr_texture_transform: Option<extensions::KhrTextureTransform>,
     }
 }
