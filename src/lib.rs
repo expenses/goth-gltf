@@ -3,7 +3,7 @@
 use nanoserde::DeJson;
 use std::fmt::Debug;
 
-pub trait Extensions {
+pub trait Extensions: DeJson {
     type RootExtensions: DeJson + Default + Debug + Clone;
     type TextureExtensions: DeJson + Default + Debug + Clone;
     type TextureInfoExtensions: DeJson + Default + Debug + Clone;
@@ -779,7 +779,7 @@ pub mod default_extensions {
     use crate::extensions;
     use nanoserde::DeJson;
 
-    #[derive(Debug, Default, Clone, Copy)]
+    #[derive(Debug, Default, Clone, Copy, DeJson)]
     pub struct Extensions;
 
     impl super::Extensions for Extensions {
