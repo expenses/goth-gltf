@@ -12,6 +12,7 @@ pub trait Extensions: DeJson {
     type MaterialExtensions: DeJson + Default + Debug + Clone;
     type BufferExtensions: DeJson + Default + Debug + Clone;
     type NodeExtensions: DeJson + Default + Debug + Clone;
+    type NodeExtras: DeJson + Default + Debug + Clone;
     type BufferViewExtensions: DeJson + Default + Debug + Clone;
 }
 
@@ -169,7 +170,8 @@ pub struct Node<E: Extensions> {
     pub translation: Option<[f32; 3]>,
     #[nserde(default)]
     pub extensions: E::NodeExtensions,
-    // missing: weights
+    #[nserde(default)]
+    pub extras: E::NodeExtras,
 }
 
 impl<E: Extensions> Node<E> {
@@ -636,6 +638,7 @@ pub mod default_extensions {
         type MaterialExtensions = MaterialExtensions<Self>;
         type BufferExtensions = BufferExtensions;
         type NodeExtensions = NodeExtensions;
+        type NodeExtras = NodeExtras;
         type BufferViewExtensions = BufferViewExtensions;
     }
 
@@ -655,6 +658,14 @@ pub mod default_extensions {
     pub struct NodeExtensions {
         #[nserde(rename = "EXT_mesh_gpu_instancing")]
         pub ext_mesh_gpu_instancing: Option<extensions::ExtMeshGpuInstancing>,
+        #[nserde(rename = "MSFT_lod")]
+        pub msft_lod: Option<extensions::MsftLod>,
+    }
+
+    #[derive(Debug, DeJson, Default, Clone)]
+    pub struct NodeExtras {
+        #[nserde(rename = "MSFT_screencoverage")]
+        pub msft_screencoverage: Option<Vec<f32>>,
     }
 
     #[derive(Debug, Default, DeJson, Clone)]

@@ -150,3 +150,8 @@ pub struct ExtMeshGpuInstancingAttributes {
     #[nserde(rename = "TRANSLATION")]
     pub translation: usize,
 }
+
+#[derive(Debug, DeJson, Clone)]
+pub struct MsftLod {
+    ids: Vec<usize>,
+}
