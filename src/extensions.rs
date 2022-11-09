@@ -153,5 +153,5 @@ pub struct ExtMeshGpuInstancingAttributes {
 
 #[derive(Debug, DeJson, Clone)]
 pub struct MsftLod {
-    ids: Vec<usize>,
+    pub ids: Vec<usize>,
 }
