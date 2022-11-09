@@ -45,6 +45,10 @@ pub struct Gltf<E: Extensions> {
     pub cameras: Vec<Camera>,
     #[nserde(default)]
     pub extensions: E::RootExtensions,
+    #[nserde(default)]
+    pub scenes: Vec<Scene>,
+    #[nserde(default)]
+    pub scene: usize,
 }
 
 impl<E: Extensions> Gltf<E> {
@@ -622,6 +626,11 @@ pub struct CameraOrthographic {
     pub ymag: f32,
     pub zfar: f32,
     pub znear: f32,
+}
+
+#[derive(Debug, DeJson, Clone)]
+pub struct Scene {
+    pub nodes: Vec<usize>,
 }
 
 pub mod default_extensions {
