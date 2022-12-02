@@ -2,7 +2,7 @@
 
 pub mod extensions;
 
-use nanoserde::DeJson;
+use nanoserde::{DeJson, SerJson};
 use std::fmt::Debug;
 
 pub trait Extensions: DeJson {
@@ -11,8 +11,8 @@ pub trait Extensions: DeJson {
     type TextureInfoExtensions: DeJson + Default + Debug + Clone;
     type MaterialExtensions: DeJson + Default + Debug + Clone;
     type BufferExtensions: DeJson + Default + Debug + Clone;
-    type NodeExtensions: DeJson + Default + Debug + Clone;
-    type NodeExtras: DeJson + Default + Debug + Clone;
+    type NodeExtensions: DeJson + Default + Debug + Clone + SerJson;
+    type NodeExtras: DeJson + Default + Debug + Clone + SerJson;
     type BufferViewExtensions: DeJson + Default + Debug + Clone;
 }
 
@@ -161,11 +161,10 @@ pub struct Buffer<E: Extensions> {
     pub extensions: E::BufferExtensions,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Node<E: Extensions> {
     pub camera: Option<usize>,
-    #[nserde(default)]
-    pub children: Vec<usize>,
+    pub children: Option<Vec<usize>>,
     pub skin: Option<usize>,
     pub matrix: Option<[f32; 16]>,
     pub mesh: Option<usize>,
@@ -604,14 +603,24 @@ impl Default for SamplerWrap {
     }
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Camera {
     pub perspective: Option<CameraPerspective>,
     pub orthographic: Option<CameraOrthographic>,
+    #[nserde(rename = "type")]
+    pub camera_type: CameraType,
     // missing type, but use the other structs for that.
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
+pub enum CameraType {
+    #[nserde(rename = "perspective")]
+    Perspective,
+    #[nserde(rename = "orthographic")]
+    Orthographic,
+}
+
+#[derive(Debug, DeJson, SerJson)]
 pub struct CameraPerspective {
     pub yfov: f32,
     pub znear: f32,
@@ -620,7 +629,7 @@ pub struct CameraPerspective {
     pub aspect_ratio: Option<f32>,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, Clone, Copy, SerJson)]
 pub struct CameraOrthographic {
     pub xmag: f32,
     pub ymag: f32,
@@ -635,9 +644,9 @@ pub struct Scene {
 
 pub mod default_extensions {
     use crate::extensions;
-    use nanoserde::DeJson;
+    use nanoserde::{DeJson, SerJson};
 
-    #[derive(Debug, Default, Clone, Copy, DeJson)]
+    #[derive(Debug, Default, Clone, Copy, DeJson, SerJson)]
     pub struct Extensions;
 
     impl super::Extensions for Extensions {
@@ -663,7 +672,7 @@ pub mod default_extensions {
         pub ext_meshopt_compression: Option<extensions::ExtMeshoptCompressionBuffer>,
     }
 
-    #[derive(Debug, DeJson, Default, Clone)]
+    #[derive(Debug, DeJson, Default, Clone, SerJson)]
     pub struct NodeExtensions {
         #[nserde(rename = "EXT_mesh_gpu_instancing")]
         pub ext_mesh_gpu_instancing: Option<extensions::ExtMeshGpuInstancing>,
@@ -671,7 +680,7 @@ pub mod default_extensions {
         pub msft_lod: Option<extensions::MsftLod>,
     }
 
-    #[derive(Debug, DeJson, Default, Clone)]
+    #[derive(Debug, DeJson, Default, Clone, SerJson)]
     pub struct NodeExtras {
         #[nserde(rename = "MSFT_screencoverage")]
         pub msft_screencoverage: Option<Vec<f32>>,

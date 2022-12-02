@@ -1,5 +1,5 @@
 use crate::{Extensions, TextureInfo};
-use nanoserde::DeJson;
+use nanoserde::{DeJson, SerJson};
 
 #[derive(Debug, DeJson, Clone, Copy)]
 pub struct KhrTextureBasisu {
@@ -136,12 +136,12 @@ pub struct ExtMeshoptCompressionBuffer {
     pub fallback: bool,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, Clone, Copy, SerJson)]
 pub struct ExtMeshGpuInstancing {
     pub attributes: ExtMeshGpuInstancingAttributes,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, Clone, Copy, SerJson)]
 pub struct ExtMeshGpuInstancingAttributes {
     #[nserde(rename = "ROTATION")]
     pub rotation: usize,
@@ -151,7 +151,7 @@ pub struct ExtMeshGpuInstancingAttributes {
     pub translation: usize,
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, Clone, SerJson)]
 pub struct MsftLod {
     pub ids: Vec<usize>,
 }
