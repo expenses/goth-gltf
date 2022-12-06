@@ -237,6 +237,8 @@ pub struct Attributes {
     pub normal: Option<usize>,
     #[nserde(rename = "TEXCOORD_0")]
     pub texcoord_0: Option<usize>,
+    #[nserde(rename = "TEXCOORD_1")]
+    pub texcoord_1: Option<usize>,
     #[nserde(rename = "JOINTS_0")]
     pub joints_0: Option<usize>,
     #[nserde(rename = "WEIGHTS_0")]
