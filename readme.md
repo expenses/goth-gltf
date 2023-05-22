@@ -1,8 +1,8 @@
-Goth-gltf aims to be a low-level, unopinionated reader for glTF files.
+Goth-gltf aims to be a low-level, unopinionated reader for gltf files.
 
 ## In comparison with [gltf-rs], it:
 
-- Represents the glTF JSON structure transparently
+- Represents the gltf JSON structure transparently
 - Uses nanoserde instead of serde
 - Supports a wider range of extensions
 - Has no code specific for loading images or reading attributes out of buffers
@@ -18,5 +18,7 @@ Goth-gltf aims to be a low-level, unopinionated reader for glTF files.
 - `KHR_texture_transform`
 - `EXT_mesh_gpu_instancing`
 - `EXT_meshopt_compression`
+- `MSFT_lod`
+- `MSFT_screencoverage`
 
 [gltf-rs]: https://github.com/gltf-rs/gltf

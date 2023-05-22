@@ -1,4 +1,4 @@
-//! This crate is indended as a lightweight, low-level reader for gltf (and glb) files.
+//! This crate aims to be a low-level, unopinionated reader for gltf files.
 //!
 //! Basic example:
 //! ```no_run
@@ -14,6 +14,9 @@
 #![allow(clippy::question_mark)]
 
 pub mod extensions;
+/// Basic support for reading primitive data from buffer views and accessors.
+#[cfg(feature = "primitive_reader")]
+pub mod primitive_reader;
 
 use nanoserde::DeJson;
 use std::fmt::Debug;
