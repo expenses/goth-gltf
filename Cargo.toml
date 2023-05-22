@@ -5,4 +5,4 @@ edition = "2021"
 license = "MIT"
 
 [dependencies]
-nanoserde = { git = "https://github.com/not-fl3/nanoserde" }
+nanoserde = "0.1.32"

@@ -1,3 +1,16 @@
+//! This crate is indended as a lightweight, low-level reader for gltf (and glb) files.
+//!
+//! Basic example:
+//! ```no_run
+//! let filename = std::env::args().nth(1).unwrap();
+//! let bytes = std::fs::read(&filename).unwrap();
+//! let (gltf, _): (
+//!     goth_gltf::Gltf<goth_gltf::default_extensions::Extensions>,
+//!     _,
+//! ) = goth_gltf::Gltf::from_bytes(&bytes).unwrap();
+//! println!("{:#?}", gltf);
+//! ```
+
 #![allow(clippy::question_mark)]
 
 pub mod extensions;
@@ -16,6 +29,7 @@ pub trait Extensions: DeJson {
     type BufferViewExtensions: DeJson + Default + Debug + Clone;
 }
 
+/// A parsed gltf document.
 #[derive(Debug, DeJson)]
 pub struct Gltf<E: Extensions> {
     #[nserde(default)]
@@ -52,6 +66,9 @@ pub struct Gltf<E: Extensions> {
 }
 
 impl<E: Extensions> Gltf<E> {
+    /// Load a gltf from either a gltf or a glb file.
+    ///
+    /// In the case of a .glb, the binary buffer chunk will be returned as well.
     pub fn from_bytes(bytes: &[u8]) -> Result<(Self, Option<&[u8]>), nanoserde::DeJsonErr> {
         // Check for the 4-byte magic.
         if !bytes.starts_with(b"glTF") {
@@ -216,7 +233,7 @@ pub enum NodeTransform {
 #[derive(Debug, DeJson)]
 pub struct Mesh {
     pub primitives: Vec<Primitive>,
-    // missing: weights
+    pub weights: Option<Vec<f32>>,
 }
 
 #[derive(Debug, DeJson)]
@@ -224,7 +241,51 @@ pub struct Primitive {
     pub attributes: Attributes,
     pub indices: Option<usize>,
     pub material: Option<usize>,
-    // missing: mode, targets
+    #[nserde(default)]
+    pub mode: PrimitiveMode,
+    pub targets: Option<Vec<Attributes>>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PrimitiveMode {
+    Points,
+    Lines,
+    LineLoop,
+    LineStrip,
+    Triangles,
+    TriangleStrip,
+    TriangleFan,
+}
+
+impl Default for PrimitiveMode {
+    fn default() -> Self {
+        Self::Triangles
+    }
+}
+
+impl DeJson for PrimitiveMode {
+    fn de_json(
+        state: &mut nanoserde::DeJsonState,
+        input: &mut core::str::Chars,
+    ) -> Result<Self, nanoserde::DeJsonErr> {
+        let ty = match &state.tok {
+            nanoserde::DeJsonTok::U64(ty) => match ty {
+                0 => Self::Points,
+                1 => Self::Lines,
+                2 => Self::LineLoop,
+                3 => Self::LineStrip,
+                4 => Self::Triangles,
+                5 => Self::TriangleStrip,
+                6 => Self::TriangleFan,
+                _ => return Err(state.err_range(&ty.to_string())),
+            },
+            _ => return Err(state.err_token("U64")),
+        };
+
+        state.next_tok(input)?;
+
+        Ok(ty)
+    }
 }
 
 #[derive(Debug, DeJson)]
@@ -290,8 +351,10 @@ pub struct Accessor {
     pub count: usize,
     #[nserde(rename = "type")]
     pub accessor_type: AccessorType,
-    // missing: sparse, min, max
-    // min and max are [f32; T] where T is the dimension of the accessor.
+    pub sparse: Option<Sparse>,
+    // todo: these could be changed to enum { Int, Float }.
+    pub min: Option<Vec<f32>>,
+    pub max: Option<Vec<f32>>,
 }
 
 impl Accessor {
@@ -301,6 +364,33 @@ impl Accessor {
                 self.component_type.byte_size() * self.accessor_type.num_components()
             })
     }
+}
+
+#[derive(Debug, DeJson)]
+pub struct Sparse {
+    pub count: usize,
+    pub indices: SparseIndices,
+    pub values: SparseValues,
+}
+
+#[derive(Debug, DeJson)]
+pub struct SparseIndices {
+    #[nserde(rename = "bufferView")]
+    pub buffer_view: usize,
+    #[nserde(rename = "byteOffset")]
+    #[nserde(default)]
+    pub byte_offset: usize,
+    #[nserde(rename = "componentType")]
+    pub component_type: ComponentType,
+}
+
+#[derive(Debug, DeJson)]
+pub struct SparseValues {
+    #[nserde(rename = "bufferView")]
+    pub buffer_view: usize,
+    #[nserde(rename = "byteOffset")]
+    #[nserde(default)]
+    pub byte_offset: usize,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -610,7 +700,8 @@ impl Default for SamplerWrap {
 pub struct Camera {
     pub perspective: Option<CameraPerspective>,
     pub orthographic: Option<CameraOrthographic>,
-    // missing type, but use the other structs for that.
+    #[nserde(rename = "type")]
+    pub ty: CameraType,
 }
 
 #[derive(Debug, DeJson)]
@@ -628,6 +719,14 @@ pub struct CameraOrthographic {
     pub ymag: f32,
     pub zfar: f32,
     pub znear: f32,
+}
+
+#[derive(Debug, DeJson)]
+pub enum CameraType {
+    #[nserde(rename = "perspective")]
+    Perspective,
+    #[nserde(rename = "orthographic")]
+    Orthographic,
 }
 
 #[derive(Debug, DeJson, Clone)]
