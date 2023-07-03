@@ -1,4 +1,17 @@
+# goth-gltf
+
 Goth-gltf aims to be a low-level, unopinionated reader for gltf files.
+
+Basic example:
+```rust
+let filename = std::env::args().nth(1).unwrap();
+let bytes = std::fs::read(&filename).unwrap();
+let (gltf, _): (
+    goth_gltf::Gltf<goth_gltf::default_extensions::Extensions>,
+    _,
+) = goth_gltf::Gltf::from_bytes(&bytes).unwrap();
+println!("{:#?}", gltf);
+```
 
 ## In comparison with [gltf-rs], it:
 
@@ -22,3 +35,5 @@ Goth-gltf aims to be a low-level, unopinionated reader for gltf files.
 - `MSFT_screencoverage`
 
 [gltf-rs]: https://github.com/gltf-rs/gltf
+
+License: MIT
