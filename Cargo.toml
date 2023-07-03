@@ -7,9 +7,9 @@ description = "A lightweight, low-level reader for gltf (and glb) files"
 repository = "https://github.com/expenses/goth-gltf/"
 
 [dependencies]
-anyhow = { version = "1.0.71", optional = true }
+thiserror = { version = "1.0.40", optional = true }
 bytemuck = { version = "1.13.1", optional = true }
 nanoserde = "0.1.32"
 
 [features]
-primitive_reader = ["bytemuck", "anyhow"]
+primitive_reader = ["bytemuck", "thiserror"]

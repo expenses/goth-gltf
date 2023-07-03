@@ -1,6 +1,7 @@
 use crate::*;
 use std::borrow::Cow;
 use std::collections::HashMap;
+use thiserror::Error;
 
 pub trait MeshOptCompressionExtension {
     fn ext_meshopt_compression(&self) -> Option<extensions::ExtMeshoptCompression>;
@@ -12,13 +13,11 @@ impl MeshOptCompressionExtension for crate::default_extensions::BufferViewExtens
     }
 }
 
-
 impl MeshOptCompressionExtension for () {
     fn ext_meshopt_compression(&self) -> Option<extensions::ExtMeshoptCompression> {
         None
     }
 }
-
 
 fn unsigned_short_to_float(short: u16) -> f32 {
     short as f32 / 65535.0
@@ -53,27 +52,40 @@ where
         })
 }
 
+#[derive(Error, Debug)]
+pub enum Error {
+    #[error("Accessor is missing buffer view")]
+    AccessorMissingBufferView,
+    #[error("Buffer view index {0} out of bounds")]
+    BufferViewIndexOutOfBounds(usize),
+    #[error("Accessor index {0} out of bounds")]
+    AccessorIndexOutOfBounds(usize),
+    #[error("{0}: Unsupported combination of component type, normalized and byte stride: {1:?}")]
+    UnsupportedCombination(u32, (ComponentType, bool, Option<usize>)),
+}
+
 pub fn read_buffer_with_accessor<'a, E: Extensions>(
     buffer_view_map: &'a HashMap<usize, Vec<u8>>,
     gltf: &'a crate::Gltf<E>,
     accessor: &crate::Accessor,
-) -> anyhow::Result<(&'a [u8], Option<usize>)>
+) -> Result<(&'a [u8], Option<usize>), Error>
 where
     E::BufferViewExtensions: MeshOptCompressionExtension,
 {
     let buffer_view_index = accessor
         .buffer_view
-        .ok_or_else(|| anyhow::anyhow!("Accessor is missing buffer view"))?;
-    let buffer_view = gltf.buffer_views.get(buffer_view_index).ok_or_else(|| {
-        anyhow::anyhow!("Buffer view index {} is out of range", buffer_view_index)
-    })?;
+        .ok_or(Error::AccessorMissingBufferView)?;
+    let buffer_view = gltf
+        .buffer_views
+        .get(buffer_view_index)
+        .ok_or(Error::BufferViewIndexOutOfBounds(buffer_view_index))?;
 
     let start = accessor.byte_offset;
     let end = start + accessor.count * byte_stride(accessor, buffer_view);
 
-    let buffer_view_bytes = buffer_view_map.get(&buffer_view_index).ok_or_else(|| {
-        anyhow::anyhow!("Buffer view index {} is out of range", buffer_view_index)
-    })?;
+    let buffer_view_bytes = buffer_view_map
+        .get(&buffer_view_index)
+        .ok_or(Error::BufferViewIndexOutOfBounds(buffer_view_index))?;
 
     // Force the end of the slice to be in-bounds as either the maths for calculating
     // `end` is wrong or some files are a little odd.
@@ -88,17 +100,11 @@ pub fn read_f32<'a>(
     slice: &'a [u8],
     byte_stride: Option<usize>,
     accessor: &crate::Accessor,
-) -> anyhow::Result<Cow<'a, [f32]>> {
+) -> Result<Cow<'a, [f32]>, Error> {
     Ok(
         match (accessor.component_type, accessor.normalized, byte_stride) {
             (ComponentType::Float, false, None) => Cow::Borrowed(bytemuck::cast_slice(slice)),
-            other => {
-                return Err(anyhow::anyhow!(
-                "{}: Unsupported combination of component type, normalized and byte stride: {:?}",
-                std::line!(),
-                other
-            ))
-            }
+            other => return Err(Error::UnsupportedCombination(std::line!(), other)),
         },
     )
 }
@@ -107,7 +113,7 @@ pub fn read_f32x3<'a>(
     slice: &'a [u8],
     byte_stride: Option<usize>,
     accessor: &crate::Accessor,
-) -> anyhow::Result<Cow<'a, [[f32; 3]]>> {
+) -> Result<Cow<'a, [[f32; 3]]>, Error> {
     Ok(
         match (accessor.component_type, accessor.normalized, byte_stride) {
             (ComponentType::Float, false, None | Some(12)) => {
@@ -152,13 +158,7 @@ pub fn read_f32x3<'a>(
                     .map(move |slice| std::array::from_fn(|i| signed_byte_to_float(slice[i] as i8)))
                     .collect(),
             ),
-            other => {
-                return Err(anyhow::anyhow!(
-                "{}: Unsupported combination of component type, normalized and byte stride: {:?}",
-                std::line!(),
-                other
-            ))
-            }
+            other => return Err(Error::UnsupportedCombination(std::line!(), other)),
         },
     )
 }
@@ -167,7 +167,7 @@ fn read_f32x2<'a>(
     slice: &'a [u8],
     byte_stride: Option<usize>,
     accessor: &crate::Accessor,
-) -> anyhow::Result<Cow<'a, [[f32; 2]]>> {
+) -> Result<Cow<'a, [[f32; 2]]>, Error> {
     Ok(
         match (accessor.component_type, accessor.normalized, byte_stride) {
             (ComponentType::Float, false, None | Some(8)) => {
@@ -193,13 +193,7 @@ fn read_f32x2<'a>(
                         .collect(),
                 )
             }
-            other => {
-                return Err(anyhow::anyhow!(
-                "{}: Unsupported combination of component type, normalized and byte stride: {:?}",
-                std::line!(),
-                other
-            ))
-            }
+            other => return Err(Error::UnsupportedCombination(std::line!(), other)),
         },
     )
 }
@@ -215,7 +209,7 @@ pub fn read_f32x4<'a>(
     slice: &'a [u8],
     byte_stride: Option<usize>,
     accessor: &crate::Accessor,
-) -> anyhow::Result<Cow<'a, [[f32; 4]]>> {
+) -> Result<Cow<'a, [[f32; 4]]>, Error> {
     Ok(
         match (accessor.component_type, accessor.normalized, byte_stride) {
             (ComponentType::Float, false, None) => {
@@ -238,13 +232,7 @@ pub fn read_f32x4<'a>(
                         .collect(),
                 )
             }
-            other => {
-                return Err(anyhow::anyhow!(
-                "{}: Unsupported combination of component type, normalized and byte stride: {:?}",
-                std::line!(),
-                other
-            ))
-            }
+            other => return Err(Error::UnsupportedCombination(std::line!(), other)),
         },
     )
 }
@@ -253,7 +241,7 @@ fn read_u32<'a>(
     slice: &'a [u8],
     byte_stride: Option<usize>,
     accessor: &crate::Accessor,
-) -> anyhow::Result<Cow<'a, [u32]>> {
+) -> Result<Cow<'a, [u32]>, Error> {
     Ok(
         match (accessor.component_type, accessor.normalized, byte_stride) {
             (ComponentType::UnsignedShort, false, None) => {
@@ -261,13 +249,7 @@ fn read_u32<'a>(
                 Cow::Owned(slice.iter().map(|&i| i as u32).collect())
             }
             (ComponentType::UnsignedInt, false, None) => Cow::Borrowed(bytemuck::cast_slice(slice)),
-            other => {
-                return Err(anyhow::anyhow!(
-                "{}: Unsupported combination of component type, normalized and byte stride: {:?}",
-                std::line!(),
-                other
-            ))
-            }
+            other => return Err(Error::UnsupportedCombination(std::line!(), other)),
         },
     )
 }
@@ -276,7 +258,7 @@ fn read_u32x4<'a>(
     slice: &'a [u8],
     byte_stride: Option<usize>,
     accessor: &crate::Accessor,
-) -> anyhow::Result<Cow<'a, [[u32; 4]]>> {
+) -> Result<Cow<'a, [[u32; 4]]>, Error> {
     Ok(
         match (accessor.component_type, accessor.normalized, byte_stride) {
             (ComponentType::UnsignedByte, false, Some(4) | None) => Cow::Owned(
@@ -285,13 +267,7 @@ fn read_u32x4<'a>(
                     .map(|slice| std::array::from_fn(|i| slice[i] as u32))
                     .collect(),
             ),
-            other => {
-                return Err(anyhow::anyhow!(
-                "{}: Unsupported combination of component type, normalized and byte stride: {:?}",
-                std::line!(),
-                other
-            ))
-            }
+            other => return Err(Error::UnsupportedCombination(std::line!(), other)),
         },
     )
 }
@@ -318,96 +294,102 @@ where
         }
     }
 
-    pub fn read_indices(&self) -> anyhow::Result<Option<Cow<'a, [u32]>>> {
+    pub fn read_indices(&self) -> Result<Option<Cow<'a, [u32]>>, Error> {
         let accessor_index = match self.primitive.indices {
             Some(index) => index,
             None => return Ok(None),
         };
 
-        let accessor =
-            self.gltf.accessors.get(accessor_index).ok_or_else(|| {
-                anyhow::anyhow!("Accessor index {} out of bounds", accessor_index)
-            })?;
+        let accessor = self
+            .gltf
+            .accessors
+            .get(accessor_index)
+            .ok_or(Error::AccessorIndexOutOfBounds(accessor_index))?;
         let (slice, byte_stride) =
             read_buffer_with_accessor(self.buffer_view_map, self.gltf, accessor)?;
 
         Ok(Some(read_u32(slice, byte_stride, accessor)?))
     }
 
-    pub fn read_positions(&self) -> anyhow::Result<Option<Cow<'a, [[f32; 3]]>>> {
+    pub fn read_positions(&self) -> Result<Option<Cow<'a, [[f32; 3]]>>, Error> {
         let accessor_index = match self.primitive.attributes.position {
             Some(index) => index,
             None => return Ok(None),
         };
 
-        let accessor =
-            self.gltf.accessors.get(accessor_index).ok_or_else(|| {
-                anyhow::anyhow!("Accessor index {} out of bounds", accessor_index)
-            })?;
+        let accessor = self
+            .gltf
+            .accessors
+            .get(accessor_index)
+            .ok_or(Error::AccessorIndexOutOfBounds(accessor_index))?;
         let (slice, byte_stride) =
             read_buffer_with_accessor(self.buffer_view_map, self.gltf, accessor)?;
 
         Ok(Some(read_f32x3(slice, byte_stride, accessor)?))
     }
 
-    pub fn read_normals(&self) -> anyhow::Result<Option<Cow<'a, [[f32; 3]]>>> {
+    pub fn read_normals(&self) -> Result<Option<Cow<'a, [[f32; 3]]>>, Error> {
         let accessor_index = match self.primitive.attributes.normal {
             Some(index) => index,
             None => return Ok(None),
         };
 
-        let accessor =
-            self.gltf.accessors.get(accessor_index).ok_or_else(|| {
-                anyhow::anyhow!("Accessor index {} out of bounds", accessor_index)
-            })?;
+        let accessor = self
+            .gltf
+            .accessors
+            .get(accessor_index)
+            .ok_or(Error::AccessorIndexOutOfBounds(accessor_index))?;
         let (slice, byte_stride) =
             read_buffer_with_accessor(self.buffer_view_map, self.gltf, accessor)?;
 
         Ok(Some(read_f32x3(slice, byte_stride, accessor)?))
     }
 
-    pub fn read_uvs(&self) -> anyhow::Result<Option<Cow<'a, [[f32; 2]]>>> {
+    pub fn read_uvs(&self) -> Result<Option<Cow<'a, [[f32; 2]]>>, Error> {
         let accessor_index = match self.primitive.attributes.texcoord_0 {
             Some(index) => index,
             None => return Ok(None),
         };
 
-        let accessor =
-            self.gltf.accessors.get(accessor_index).ok_or_else(|| {
-                anyhow::anyhow!("Accessor index {} out of bounds", accessor_index)
-            })?;
+        let accessor = self
+            .gltf
+            .accessors
+            .get(accessor_index)
+            .ok_or(Error::AccessorIndexOutOfBounds(accessor_index))?;
         let (slice, byte_stride) =
             read_buffer_with_accessor(self.buffer_view_map, self.gltf, accessor)?;
 
         Ok(Some(read_f32x2(slice, byte_stride, accessor)?))
     }
 
-    pub fn read_second_uvs(&self) -> anyhow::Result<Option<Cow<'a, [[f32; 2]]>>> {
+    pub fn read_second_uvs(&self) -> Result<Option<Cow<'a, [[f32; 2]]>>, Error> {
         let accessor_index = match self.primitive.attributes.texcoord_1 {
             Some(index) => index,
             None => return Ok(None),
         };
 
-        let accessor =
-            self.gltf.accessors.get(accessor_index).ok_or_else(|| {
-                anyhow::anyhow!("Accessor index {} out of bounds", accessor_index)
-            })?;
+        let accessor = self
+            .gltf
+            .accessors
+            .get(accessor_index)
+            .ok_or(Error::AccessorIndexOutOfBounds(accessor_index))?;
         let (slice, byte_stride) =
             read_buffer_with_accessor(self.buffer_view_map, self.gltf, accessor)?;
 
         Ok(Some(read_f32x2(slice, byte_stride, accessor)?))
     }
 
-    pub fn read_joints(&self) -> anyhow::Result<Option<Cow<'a, [[u32; 4]]>>> {
+    pub fn read_joints(&self) -> Result<Option<Cow<'a, [[u32; 4]]>>, Error> {
         let accessor_index = match self.primitive.attributes.joints_0 {
             Some(index) => index,
             None => return Ok(None),
         };
 
-        let accessor =
-            self.gltf.accessors.get(accessor_index).ok_or_else(|| {
-                anyhow::anyhow!("Accessor index {} out of bounds", accessor_index)
-            })?;
+        let accessor = self
+            .gltf
+            .accessors
+            .get(accessor_index)
+            .ok_or(Error::AccessorIndexOutOfBounds(accessor_index))?;
 
         let (slice, byte_stride) =
             read_buffer_with_accessor(self.buffer_view_map, self.gltf, accessor)?;
@@ -415,16 +397,17 @@ where
         Ok(Some(read_u32x4(slice, byte_stride, accessor)?))
     }
 
-    pub fn read_weights(&self) -> anyhow::Result<Option<Cow<'a, [[f32; 4]]>>> {
+    pub fn read_weights(&self) -> Result<Option<Cow<'a, [[f32; 4]]>>, Error> {
         let accessor_index = match self.primitive.attributes.weights_0 {
             Some(index) => index,
             None => return Ok(None),
         };
 
-        let accessor =
-            self.gltf.accessors.get(accessor_index).ok_or_else(|| {
-                anyhow::anyhow!("Accessor index {} out of bounds", accessor_index)
-            })?;
+        let accessor = self
+            .gltf
+            .accessors
+            .get(accessor_index)
+            .ok_or(Error::AccessorIndexOutOfBounds(accessor_index))?;
         let (slice, byte_stride) =
             read_buffer_with_accessor(self.buffer_view_map, self.gltf, accessor)?;
 
