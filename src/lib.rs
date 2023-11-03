@@ -36,8 +36,8 @@
 
 #![allow(clippy::question_mark)]
 
-pub mod glxf;
 pub mod extensions;
+pub mod glxf;
 /// Basic support for reading primitive data from buffer views and accessors.
 #[cfg(feature = "primitive_reader")]
 pub mod primitive_reader;
