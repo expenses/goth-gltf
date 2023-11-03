@@ -67,7 +67,7 @@ impl Extensions for () {
 }
 
 /// A parsed gltf document.
-#[derive(Debug, DeJson)]
+#[derive(Debug, SerJson, DeJson, Default)]
 pub struct Gltf<E: Extensions> {
     #[nserde(default)]
     pub images: Vec<Image>,
@@ -221,7 +221,7 @@ pub struct Buffer<E: Extensions> {
     pub extensions: E::BufferExtensions,
 }
 
-#[derive(Debug, SerJson, DeJson)]
+#[derive(Debug, SerJson, DeJson, Default)]
 pub struct Node<E: Extensions> {
     pub camera: Option<usize>,
     #[nserde(default)]
@@ -275,7 +275,7 @@ pub enum NodeTransform {
     },
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct Mesh {
     pub primitives: Vec<Primitive>,
     pub weights: Option<Vec<f32>>,
@@ -283,7 +283,7 @@ pub struct Mesh {
     pub name: Option<String>,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct Primitive {
     pub attributes: Attributes,
     pub indices: Option<usize>,
@@ -295,18 +295,24 @@ pub struct Primitive {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PrimitiveMode {
-    Points,
-    Lines,
-    LineLoop,
-    LineStrip,
-    Triangles,
-    TriangleStrip,
-    TriangleFan,
+    Points = 0,
+    Lines = 1,
+    LineLoop = 2,
+    LineStrip = 3,
+    Triangles = 4,
+    TriangleStrip = 5,
+    TriangleFan = 6,
 }
 
 impl Default for PrimitiveMode {
     fn default() -> Self {
         Self::Triangles
+    }
+}
+
+impl SerJson for PrimitiveMode {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        (*self as u64).ser_json(d, s)
     }
 }
 
@@ -390,7 +396,7 @@ pub struct BufferView<E: Extensions> {
     pub extensions: E::BufferViewExtensions,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct Accessor {
     #[nserde(rename = "bufferView")]
     pub buffer_view: Option<usize>,
@@ -421,14 +427,14 @@ impl Accessor {
     }
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct Sparse {
     pub count: usize,
     pub indices: SparseIndices,
     pub values: SparseValues,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct SparseIndices {
     #[nserde(rename = "bufferView")]
     pub buffer_view: usize,
@@ -450,12 +456,12 @@ pub struct SparseValues {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ComponentType {
-    UnsignedByte,
-    Byte,
-    UnsignedShort,
-    Short,
-    UnsignedInt,
-    Float,
+    Byte = 5120,
+    UnsignedByte = 5121,
+    Short = 5122,
+    UnsignedShort = 5123,
+    UnsignedInt = 5125,
+    Float = 5126,
 }
 
 impl ComponentType {
@@ -465,6 +471,12 @@ impl ComponentType {
             Self::UnsignedShort | Self::Short => 2,
             Self::UnsignedInt | Self::Float => 4,
         }
+    }
+}
+
+impl SerJson for ComponentType {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        (*self as u64).ser_json(d, s)
     }
 }
 
@@ -552,6 +564,24 @@ pub struct Material<E: Extensions> {
     pub extensions: E::MaterialExtensions,
 }
 
+impl<E: Extensions> Default for Material<E> {
+    fn default() -> Self {
+        Self {
+            pbr_metallic_roughness: Default::default(),
+            normal_texture: None,
+            occlusion_texture: None,
+            emissive_texture: None,
+            emissive_factor: [0.0; 3],
+            alpha_mode: Default::default(),
+            alpha_cutoff: 0.5,
+            double_sided: false,
+            #[cfg(feature = "names")]
+            name: None,
+            extensions: Default::default(),
+        }
+    }
+}
+
 #[derive(Debug, SerJson, DeJson, Clone, Copy)]
 pub enum AlphaMode {
     #[nserde(rename = "OPAQUE")]
@@ -631,7 +661,7 @@ pub struct OcclusionTextureInfo<E: Extensions> {
     pub extensions: E::TextureInfoExtensions,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, SerJson, DeJson)]
 pub struct Sampler {
     #[nserde(rename = "magFilter")]
     pub mag_filter: Option<FilterMode>,
@@ -647,10 +677,16 @@ pub struct Sampler {
     pub name: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum FilterMode {
-    Nearest,
-    Linear,
+    Nearest = 9728,
+    Linear = 9729,
+}
+
+impl SerJson for FilterMode {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        (*self as u64).ser_json(d, s)
+    }
 }
 
 impl DeJson for FilterMode {
@@ -673,10 +709,25 @@ impl DeJson for FilterMode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct MinFilter {
     pub mode: FilterMode,
     pub mipmap: Option<FilterMode>,
+}
+
+impl SerJson for MinFilter {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        let value: u64 = match (self.mode, self.mipmap) {
+            (FilterMode::Nearest, None) => 9728,
+            (FilterMode::Linear, None) => 9729,
+            (FilterMode::Nearest, Some(FilterMode::Nearest)) => 9984,
+            (FilterMode::Linear, Some(FilterMode::Nearest)) => 9985,
+            (FilterMode::Nearest, Some(FilterMode::Linear)) => 9986,
+            (FilterMode::Linear, Some(FilterMode::Linear)) => 9987,
+        };
+
+        value.ser_json(d, s)
+    }
 }
 
 impl DeJson for MinFilter {
@@ -721,11 +772,17 @@ impl DeJson for MinFilter {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum SamplerWrap {
-    ClampToEdge,
-    MirroredRepeat,
-    Repeat,
+    ClampToEdge = 33071,
+    MirroredRepeat = 33648,
+    Repeat = 10497,
+}
+
+impl SerJson for SamplerWrap {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        (*self as u64).ser_json(d, s)
+    }
 }
 
 impl DeJson for SamplerWrap {
@@ -870,4 +927,67 @@ pub mod default_extensions {
         #[nserde(rename = "KHR_texture_transform")]
         pub khr_texture_transform: Option<extensions::KhrTextureTransform>,
     }
+}
+
+#[test]
+fn roundtrip_min_filter() {
+    for value in [9728, 9729, 9984, 9985, 9986, 9987] {
+        let string = format!("{}", value);
+        let filter = MinFilter::deserialize_json(&string).unwrap();
+        let string_again = filter.serialize_json();
+        assert_eq!(string, string_again);
+    }
+
+    for mode in [FilterMode::Nearest, FilterMode::Linear] {
+        for mipmap in [None, Some(FilterMode::Nearest), Some(FilterMode::Linear)] {
+            let filter = MinFilter { mode, mipmap };
+            let string = filter.serialize_json();
+            let filter_again = MinFilter::deserialize_json(&string).unwrap();
+            assert_eq!(filter, filter_again);
+        }
+    }
+}
+
+#[test]
+fn roundtrip_gltf() {
+    let gltf = Gltf::<()> {
+        nodes: vec![
+            Node {
+            translation: Some([1.5; 3]),
+            scale: Some([0.1; 3]),
+            camera: Some(0),
+            ..Default::default()
+            }],
+        cameras: vec![
+            Camera {
+                ty: CameraType::Perspective,
+                perspective: Some(CameraPerspective {
+                    yfov: 45.0_f32.to_radians(),
+                    znear: 0.1,
+                    zfar: None,
+                    aspect_ratio: Some(4.0 / 3.0),
+                }),
+                orthographic: None,
+                #[cfg(feature = "names")]
+                name: None,
+            }
+        ],
+        materials: vec![
+            Material {
+                pbr_metallic_roughness: PbrMetallicRoughness {
+                    base_color_factor: [0.7, 0.7, 0.7, 1.0],
+                    metallic_factor: 1.0,
+                    roughness_factor: 0.25,
+                    ..Default::default()
+                },
+                ..Default::default()
+            }
+        ],
+        ..Default::default()
+    };
+
+    let string = gltf.serialize_json();
+    let gltf_again = Gltf::<()>::from_json_string(&string).unwrap();
+    let string_again = gltf_again.serialize_json();
+    assert_eq!(string, string_again);
 }
