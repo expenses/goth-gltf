@@ -55,6 +55,17 @@ pub trait Extensions: DeJson {
     type BufferViewExtensions: DeJson + Default + Debug + Clone;
 }
 
+impl Extensions for () {
+    type RootExtensions = ();
+    type TextureExtensions = ();
+    type TextureInfoExtensions = ();
+    type MaterialExtensions = ();
+    type BufferExtensions = ();
+    type NodeExtensions = ();
+    type NodeExtras = ();
+    type BufferViewExtensions = ();
+}
+
 /// A parsed gltf document.
 #[derive(Debug, DeJson)]
 pub struct Gltf<E: Extensions> {
