@@ -1,4 +1,4 @@
-use nanoserde::{DeJson, SerJson};
+use nanoserde::DeJson;
 
 #[derive(Debug, DeJson)]
 pub struct Glxf<E: crate::Extensions> {
@@ -23,6 +23,8 @@ pub struct Asset {
     pub nodes: Option<Vec<String>>,
     #[nserde(default)]
     pub transform: AssetTransform,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 #[derive(Debug, DeJson)]

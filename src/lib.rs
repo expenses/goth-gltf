@@ -151,12 +151,16 @@ pub struct Skin {
     pub inverse_bind_matrices: Option<usize>,
     pub skeleton: Option<usize>,
     pub joints: Vec<usize>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 #[derive(Debug, DeJson)]
 pub struct Animation {
     pub channels: Vec<Channel>,
     pub samplers: Vec<AnimationSampler>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 #[derive(Debug, DeJson)]
@@ -212,6 +216,8 @@ pub struct Buffer<E: Extensions> {
     pub uri: Option<String>,
     #[nserde(rename = "byteLength")]
     pub byte_length: usize,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
     #[nserde(default)]
     pub extensions: E::BufferExtensions,
 }
@@ -229,6 +235,8 @@ pub struct Node<E: Extensions> {
     pub translation: Option<[f32; 3]>,
     #[nserde(rename = "asset")]
     pub glxf_asset: Option<usize>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
     #[nserde(default)]
     pub extensions: E::NodeExtensions,
     #[nserde(default)]
@@ -274,6 +282,8 @@ pub enum NodeTransform {
 pub struct Mesh {
     pub primitives: Vec<Primitive>,
     pub weights: Option<Vec<f32>>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 #[derive(Debug, DeJson)]
@@ -353,12 +363,16 @@ pub struct Image {
     pub mime_type: Option<String>,
     #[nserde(rename = "bufferView")]
     pub buffer_view: Option<usize>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 #[derive(Debug, DeJson)]
 pub struct Texture<E: Extensions> {
     pub sampler: Option<usize>,
     pub source: Option<usize>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
     #[nserde(default)]
     pub extensions: E::TextureExtensions,
 }
@@ -373,6 +387,8 @@ pub struct BufferView<E: Extensions> {
     pub byte_length: usize,
     #[nserde(rename = "byteStride")]
     pub byte_stride: Option<usize>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
     #[nserde(default)]
     pub extensions: E::BufferViewExtensions,
 }
@@ -395,6 +411,8 @@ pub struct Accessor {
     // todo: these could be changed to enum { Int, Float }.
     pub min: Option<Vec<f32>>,
     pub max: Option<Vec<f32>>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 impl Accessor {
@@ -531,6 +549,8 @@ pub struct Material<E: Extensions> {
     #[nserde(rename = "doubleSided")]
     #[nserde(default)]
     pub double_sided: bool,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
     #[nserde(default)]
     pub extensions: E::MaterialExtensions,
 }
@@ -626,6 +646,8 @@ pub struct Sampler {
     #[nserde(rename = "wrapT")]
     #[nserde(default)]
     pub wrap_t: SamplerWrap,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 #[derive(Debug)]
@@ -742,6 +764,8 @@ pub struct Camera {
     pub orthographic: Option<CameraOrthographic>,
     #[nserde(rename = "type")]
     pub ty: CameraType,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 #[derive(Debug, DeJson)]
@@ -772,6 +796,8 @@ pub enum CameraType {
 #[derive(Debug, DeJson, Clone)]
 pub struct Scene {
     pub nodes: Vec<usize>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
 }
 
 pub mod default_extensions {
