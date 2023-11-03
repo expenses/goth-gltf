@@ -36,6 +36,7 @@
 
 #![allow(clippy::question_mark)]
 
+pub mod glxf;
 pub mod extensions;
 /// Basic support for reading primitive data from buffer views and accessors.
 #[cfg(feature = "primitive_reader")]
@@ -215,6 +216,8 @@ pub struct Node<E: Extensions> {
     pub rotation: Option<[f32; 4]>,
     pub scale: Option<[f32; 3]>,
     pub translation: Option<[f32; 3]>,
+    #[nserde(rename = "asset")]
+    pub glxf_asset: Option<usize>,
     #[nserde(default)]
     pub extensions: E::NodeExtensions,
     #[nserde(default)]
