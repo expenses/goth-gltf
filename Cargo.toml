@@ -14,3 +14,4 @@ nanoserde = "0.1.35"
 
 [features]
 primitive_reader = ["bytemuck", "thiserror"]
+names = []
