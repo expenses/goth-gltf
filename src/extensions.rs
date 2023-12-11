@@ -44,6 +44,19 @@ pub struct KhrMaterialsEmissiveStrength {
 pub struct KhrMaterialsUnlit {}
 
 #[derive(Debug, DeJson, Clone)]
+pub struct KhrMaterialsSpecular<E: Extensions> {
+    #[nserde(rename = "specularFactor")]
+    #[nserde(default = "1.0")]
+    pub specular_factor: f32,
+    #[nserde(rename = "specularTexture")]
+    pub specular_texture: Option<TextureInfo<E>>,
+    #[nserde(rename = "specularColorFactor", default = "[1.0, 1.0, 1.0]")]
+    pub specular_color_factor: [f32; 3],
+    #[nserde(rename = "specularColorTexture")]
+    pub specular_color_texture: Option<TextureInfo<E>>,
+}
+
+#[derive(Debug, DeJson, Clone)]
 pub struct KhrLightsPunctual {
     #[nserde(default)]
     pub lights: Vec<Light>,

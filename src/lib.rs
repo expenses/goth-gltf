@@ -863,6 +863,8 @@ pub mod default_extensions {
         pub khr_materials_unlit: Option<extensions::KhrMaterialsUnlit>,
         #[nserde(rename = "KHR_materials_ior")]
         pub khr_materials_ior: Option<extensions::KhrMaterialsIor>,
+        #[nserde(rename = "KHR_materials_specular")]
+        pub khr_materials_specular: Option<extensions::KhrMaterialsSpecular<E>>,
     }
 
     #[derive(Debug, DeJson, Default, Clone, Copy)]
