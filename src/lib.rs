@@ -931,9 +931,8 @@ pub mod default_extensions {
 
 #[test]
 fn roundtrip_min_filter() {
-    for value in [9728, 9729, 9984, 9985, 9986, 9987] {
-        let string = format!("{}", value);
-        let filter = MinFilter::deserialize_json(&string).unwrap();
+    for string in ["9728", "9729", "9984", "9985", "9986", "9987"] {
+        let filter = MinFilter::deserialize_json(string).unwrap();
         let string_again = filter.serialize_json();
         assert_eq!(string, string_again);
     }
