@@ -57,6 +57,15 @@ pub struct KhrMaterialsSpecular<E: Extensions> {
 }
 
 #[derive(Debug, DeJson, Clone)]
+pub struct KhrMaterialsTransmission<E: Extensions> {
+    #[nserde(rename = "transmissionFactor")]
+    #[nserde(default = "1.0")]
+    pub transmission_factor: f32,
+    #[nserde(rename = "transmissionTexture")]
+    pub transmission_texture: Option<TextureInfo<E>>,
+}
+
+#[derive(Debug, DeJson, Clone)]
 pub struct KhrLightsPunctual {
     #[nserde(default)]
     pub lights: Vec<Light>,
