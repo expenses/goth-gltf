@@ -492,7 +492,7 @@ impl DeJson for ComponentType {
     }
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, PartialEq)]
 pub enum AccessorType {
     #[nserde(rename = "SCALAR")]
     Scalar,
