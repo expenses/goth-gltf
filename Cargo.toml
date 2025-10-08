@@ -1,16 +1,16 @@
 [package]
 name = "goth-gltf"
-version = "0.1.1"
-edition = "2021"
+version = "0.1.2"
+edition = "2024"
 license = "MIT"
 description = "A lightweight, low-level reader for gltf (and glb) files"
 repository = "https://github.com/expenses/goth-gltf/"
 readme = "readme.md"
 
 [dependencies]
-thiserror = { version = "1.0.40", optional = true }
-bytemuck = { version = "1.13.1", optional = true }
-nanoserde = "0.1.32"
+thiserror = { version = "2.0.17", optional = true }
+bytemuck = { version = "1.24.0", optional = true }
+nanoserde = "0.2.1"
 
 [features]
 primitive_reader = ["bytemuck", "thiserror"]

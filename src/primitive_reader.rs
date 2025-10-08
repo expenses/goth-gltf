@@ -199,10 +199,12 @@ fn read_f32x2<'a>(
 }
 
 unsafe fn cast_slice<T>(bytes: &[u8]) -> &[T] {
-    std::slice::from_raw_parts(
-        bytes.as_ptr() as *const T,
-        bytes.len() / std::mem::size_of::<T>(),
-    )
+    unsafe {
+        std::slice::from_raw_parts(
+            bytes.as_ptr() as *const T,
+            bytes.len() / std::mem::size_of::<T>(),
+        )
+    }
 }
 
 pub fn read_f32x4<'a>(

@@ -29,6 +29,7 @@ println!("{:#?}", gltf);
 - `KHR_materials_unlit`
 - `KHR_texture_basisu`
 - `KHR_texture_transform`
+- `KHR_materials_transmission`
 - `EXT_mesh_gpu_instancing`
 - `EXT_meshopt_compression`
 - `MSFT_lod`
