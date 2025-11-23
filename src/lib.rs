@@ -820,7 +820,7 @@ pub mod default_extensions {
     #[derive(Debug, DeJson, Default, Clone)]
     pub struct RootExtensions {
         #[nserde(rename = "KHR_lights_punctual")]
-        pub khr_lights_punctual: Option<extensions::KhrLightsPunctual>,
+        pub khr_lights_punctual: Option<extensions::khr_lights_punctual::Root>,
     }
 
     #[derive(Debug, DeJson, Default, Clone)]
@@ -835,6 +835,8 @@ pub mod default_extensions {
         pub ext_mesh_gpu_instancing: Option<extensions::ExtMeshGpuInstancing>,
         #[nserde(rename = "MSFT_lod")]
         pub msft_lod: Option<extensions::MsftLod>,
+        #[nserde(rename = "KHR_lights_punctual")]
+        pub khr_lights_punctual: Option<extensions::khr_lights_punctual::Node>,
     }
 
     #[derive(Debug, DeJson, Default, Clone)]

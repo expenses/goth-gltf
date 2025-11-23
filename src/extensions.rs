@@ -65,41 +65,50 @@ pub struct KhrMaterialsTransmission<E: Extensions> {
     pub transmission_texture: Option<TextureInfo<E>>,
 }
 
-#[derive(Debug, DeJson, Clone)]
-pub struct KhrLightsPunctual {
-    #[nserde(default)]
-    pub lights: Vec<Light>,
-}
+pub mod khr_lights_punctual {
+    use nanoserde::DeJson;
 
-#[derive(Debug, DeJson, Clone, Copy)]
-pub struct Light {
-    #[nserde(default = "[1.0, 1.0, 1.0]")]
-    pub color: [f32; 3],
-    #[nserde(default = "1.0")]
-    pub intensity: f32,
-    #[nserde(rename = "type")]
-    pub ty: LightType,
-    pub spot: Option<LightSpot>,
-}
+    #[derive(Debug, DeJson, Clone)]
+    pub struct Root {
+        #[nserde(default)]
+        pub lights: Vec<Light>,
+    }
 
-#[derive(Debug, DeJson, Clone, Copy)]
-pub enum LightType {
-    #[nserde(rename = "point")]
-    Point,
-    #[nserde(rename = "directional")]
-    Directional,
-    #[nserde(rename = "spot")]
-    Spot,
-}
+    #[derive(Debug, DeJson, Clone)]
+    pub struct Node {
+        pub light: usize,
+    }
 
-#[derive(Debug, DeJson, Clone, Copy)]
-pub struct LightSpot {
-    #[nserde(rename = "innerConeAngle")]
-    #[nserde(default)]
-    pub inner_cone_angle: f32,
-    #[nserde(rename = "outerConeAngle")]
-    #[nserde(default = "std::f32::consts::FRAC_PI_4")]
-    pub outer_cone_angle: f32,
+    #[derive(Debug, DeJson, Clone, Copy)]
+    pub struct Light {
+        #[nserde(default = "[1.0, 1.0, 1.0]")]
+        pub color: [f32; 3],
+        #[nserde(default = "1.0")]
+        pub intensity: f32,
+        #[nserde(rename = "type")]
+        pub ty: LightType,
+        pub spot: Option<LightSpot>,
+    }
+
+    #[derive(Debug, DeJson, Clone, Copy)]
+    pub enum LightType {
+        #[nserde(rename = "point")]
+        Point,
+        #[nserde(rename = "directional")]
+        Directional,
+        #[nserde(rename = "spot")]
+        Spot,
+    }
+
+    #[derive(Debug, DeJson, Clone, Copy)]
+    pub struct LightSpot {
+        #[nserde(rename = "innerConeAngle")]
+        #[nserde(default)]
+        pub inner_cone_angle: f32,
+        #[nserde(rename = "outerConeAngle")]
+        #[nserde(default = "std::f32::consts::FRAC_PI_4")]
+        pub outer_cone_angle: f32,
+    }
 }
 
 #[derive(Debug, DeJson, Clone, Copy)]
