@@ -267,6 +267,7 @@ impl<E: Extensions> Node<E> {
     }
 }
 
+#[derive(Debug)]
 pub enum NodeTransform {
     Matrix([f32; 16]),
     Set {
