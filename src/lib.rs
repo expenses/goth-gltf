@@ -678,7 +678,7 @@ pub struct Sampler {
     pub name: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum FilterMode {
     Nearest,
     Linear,
@@ -714,7 +714,7 @@ impl SerJson for FilterMode {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct MinFilter {
     pub mode: FilterMode,
     pub mipmap: Option<FilterMode>,
@@ -959,5 +959,97 @@ pub mod default_extensions {
     pub struct TextureInfoExtensions {
         #[nserde(rename = "KHR_texture_transform")]
         pub khr_texture_transform: Option<extensions::KhrTextureTransform>,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use nanoserde::{DeJson, SerJson};
+
+    fn test_roundtrip<T: DeJson + SerJson + PartialEq + Debug>(value: &T) {
+        assert_eq!(
+            *value,
+            T::deserialize_json(&value.serialize_json()).unwrap()
+        );
+    }
+
+    #[test]
+    fn test_primitive_mode_roundtrip() {
+        for variant in &[
+            PrimitiveMode::Points,
+            PrimitiveMode::Lines,
+            PrimitiveMode::LineLoop,
+            PrimitiveMode::LineStrip,
+            PrimitiveMode::Triangles,
+            PrimitiveMode::TriangleStrip,
+            PrimitiveMode::TriangleFan,
+        ] {
+            test_roundtrip(variant);
+        }
+    }
+
+    #[test]
+    fn test_component_type_roundtrip() {
+        for variant in &[
+            ComponentType::UnsignedByte,
+            ComponentType::Byte,
+            ComponentType::UnsignedShort,
+            ComponentType::Short,
+            ComponentType::UnsignedInt,
+            ComponentType::Float,
+        ] {
+            test_roundtrip(variant);
+        }
+    }
+
+    #[test]
+    fn test_filter_mode_roundtrip() {
+        for variant in &[FilterMode::Nearest, FilterMode::Linear] {
+            test_roundtrip(variant);
+        }
+    }
+
+    #[test]
+    fn test_min_filter_roundtrip() {
+        for variant in &[
+            MinFilter {
+                mode: FilterMode::Nearest,
+                mipmap: None,
+            },
+            MinFilter {
+                mode: FilterMode::Linear,
+                mipmap: None,
+            },
+            MinFilter {
+                mode: FilterMode::Nearest,
+                mipmap: Some(FilterMode::Nearest),
+            },
+            MinFilter {
+                mode: FilterMode::Linear,
+                mipmap: Some(FilterMode::Nearest),
+            },
+            MinFilter {
+                mode: FilterMode::Nearest,
+                mipmap: Some(FilterMode::Linear),
+            },
+            MinFilter {
+                mode: FilterMode::Linear,
+                mipmap: Some(FilterMode::Linear),
+            },
+        ] {
+            test_roundtrip(variant);
+        }
+    }
+
+    #[test]
+    fn test_sampler_wrap_roundtrip() {
+        for variant in &[
+            SamplerWrap::ClampToEdge,
+            SamplerWrap::MirroredRepeat,
+            SamplerWrap::Repeat,
+        ] {
+            test_roundtrip(variant);
+        }
     }
 }
