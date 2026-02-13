@@ -337,6 +337,21 @@ impl DeJson for PrimitiveMode {
     }
 }
 
+impl SerJson for PrimitiveMode {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        match self {
+            Self::Points => 0,
+            Self::Lines => 1,
+            Self::LineLoop => 2,
+            Self::LineStrip => 3,
+            Self::Triangles => 4,
+            Self::TriangleStrip => 5,
+            Self::TriangleFan => 6,
+        }
+        .ser_json(d, s)
+    }
+}
+
 #[derive(Debug, DeJson)]
 pub struct Attributes {
     #[nserde(rename = "POSITION")]
@@ -491,6 +506,20 @@ impl DeJson for ComponentType {
         state.next_tok(input)?;
 
         Ok(ty)
+    }
+}
+
+impl SerJson for ComponentType {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        match self {
+            Self::Byte => 5120,
+            Self::UnsignedByte => 5121,
+            Self::Short => 5122,
+            Self::UnsignedShort => 5123,
+            Self::UnsignedInt => 5125,
+            Self::Float => 5126,
+        }
+        .ser_json(d, s)
     }
 }
 
@@ -675,6 +704,16 @@ impl DeJson for FilterMode {
     }
 }
 
+impl SerJson for FilterMode {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        match self {
+            Self::Nearest => 9728,
+            Self::Linear => 9729,
+        }
+        .ser_json(d, s)
+    }
+}
+
 #[derive(Debug)]
 pub struct MinFilter {
     pub mode: FilterMode,
@@ -723,6 +762,38 @@ impl DeJson for MinFilter {
     }
 }
 
+impl SerJson for MinFilter {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        match &self {
+            MinFilter {
+                mode: FilterMode::Nearest,
+                mipmap: None,
+            } => 9728,
+            MinFilter {
+                mode: FilterMode::Linear,
+                mipmap: None,
+            } => 9729,
+            MinFilter {
+                mode: FilterMode::Nearest,
+                mipmap: Some(FilterMode::Nearest),
+            } => 9984,
+            MinFilter {
+                mode: FilterMode::Linear,
+                mipmap: Some(FilterMode::Nearest),
+            } => 9985,
+            MinFilter {
+                mode: FilterMode::Nearest,
+                mipmap: Some(FilterMode::Linear),
+            } => 9986,
+            MinFilter {
+                mode: FilterMode::Linear,
+                mipmap: Some(FilterMode::Linear),
+            } => 9987,
+        }
+        .ser_json(d, s)
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SamplerWrap {
     ClampToEdge,
@@ -748,6 +819,17 @@ impl DeJson for SamplerWrap {
         state.next_tok(input)?;
 
         Ok(ty)
+    }
+}
+
+impl SerJson for SamplerWrap {
+    fn ser_json(&self, d: usize, s: &mut nanoserde::SerJsonState) {
+        match self {
+            Self::ClampToEdge => 33071,
+            Self::MirroredRepeat => 33648,
+            Self::Repeat => 10497,
+        }
+        .ser_json(d, s)
     }
 }
 
