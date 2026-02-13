@@ -72,10 +72,10 @@ impl Extensions for () {
 pub struct Gltf<E: Extensions> {
     pub asset: Asset,
     #[cfg(feature = "names")]
-    #[nserde(rename = "extensionsUsed")]
+    #[nserde(default, rename = "extensionsUsed")]
     pub extensions_used: Vec<String>,
     #[cfg(feature = "names")]
-    #[nserde(rename = "extensionsRequired")]
+    #[nserde(default, rename = "extensionsRequired")]
     pub extensions_required: Vec<String>,
     #[nserde(default)]
     pub extensions: E::RootExtensions,
