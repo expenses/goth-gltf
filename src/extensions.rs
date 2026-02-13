@@ -145,8 +145,9 @@ pub enum CompressionMode {
     Indices,
 }
 
-#[derive(Debug, DeJson, SerJson, PartialEq, Eq, Clone, Copy)]
+#[derive(Default, Debug, DeJson, SerJson, PartialEq, Eq, Clone, Copy)]
 pub enum CompressionFilter {
+    #[default]
     #[nserde(rename = "NONE")]
     None,
     #[nserde(rename = "OCTAHEDRAL")]
@@ -155,12 +156,6 @@ pub enum CompressionFilter {
     Quaternion,
     #[nserde(rename = "EXPONENTIAL")]
     Exponential,
-}
-
-impl Default for CompressionFilter {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 #[derive(Debug, DeJson, SerJson, Clone, Copy)]

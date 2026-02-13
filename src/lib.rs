@@ -70,37 +70,44 @@ impl Extensions for () {
 /// A parsed gltf document.
 #[derive(Debug, DeJson, SerJson)]
 pub struct Gltf<E: Extensions> {
+    pub asset: Asset,
+    #[cfg(feature = "names")]
+    #[nserde(rename = "extensionsUsed")]
+    pub extensions_used: Vec<String>,
+    #[cfg(feature = "names")]
+    #[nserde(rename = "extensionsRequired")]
+    pub extensions_required: Vec<String>,
     #[nserde(default)]
-    pub images: Vec<Image>,
+    pub extensions: E::RootExtensions,
     #[nserde(default)]
-    pub textures: Vec<Texture<E>>,
+    pub scene: usize,
+    #[nserde(default)]
+    pub scenes: Vec<Scene>,
+    #[nserde(default)]
+    pub nodes: Vec<Node<E>>,
     #[nserde(default)]
     pub materials: Vec<Material<E>>,
     #[nserde(default)]
-    pub buffers: Vec<Buffer<E>>,
+    pub meshes: Vec<Mesh>,
+    #[nserde(default)]
+    pub textures: Vec<Texture<E>>,
+    #[nserde(default)]
+    pub images: Vec<Image>,
+    #[nserde(default)]
+    pub accessors: Vec<Accessor>,
     #[nserde(rename = "bufferViews")]
     #[nserde(default)]
     pub buffer_views: Vec<BufferView<E>>,
     #[nserde(default)]
-    pub accessors: Vec<Accessor>,
-    #[nserde(default)]
-    pub meshes: Vec<Mesh>,
-    #[nserde(default)]
     pub animations: Vec<Animation>,
-    #[nserde(default)]
-    pub nodes: Vec<Node<E>>,
     #[nserde(default)]
     pub skins: Vec<Skin>,
     #[nserde(default)]
     pub samplers: Vec<Sampler>,
     #[nserde(default)]
+    pub buffers: Vec<Buffer<E>>,
+    #[nserde(default)]
     pub cameras: Vec<Camera>,
-    #[nserde(default)]
-    pub extensions: E::RootExtensions,
-    #[nserde(default)]
-    pub scenes: Vec<Scene>,
-    #[nserde(default)]
-    pub scene: usize,
 }
 
 impl<E: Extensions> Gltf<E> {
@@ -208,20 +215,22 @@ pub struct AnimationSampler {
     pub output: usize,
 }
 
-#[derive(Debug, DeJson, SerJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson)]
+pub struct Asset {
+    #[cfg(feature = "names")]
+    generator: Option<String>,
+    version: String,
+}
+
+#[derive(Default, Debug, DeJson, SerJson, Clone, Copy)]
 pub enum Interpolation {
+    #[default]
     #[nserde(rename = "LINEAR")]
     Linear,
     #[nserde(rename = "STEP")]
     Step,
     #[nserde(rename = "CUBICSPLINE")]
     CubicSpline,
-}
-
-impl Default for Interpolation {
-    fn default() -> Self {
-        Self::Linear
-    }
 }
 
 #[derive(Debug, DeJson, SerJson)]
@@ -255,11 +264,11 @@ pub struct Node<E: Extensions> {
     pub skin: Option<usize>,
     pub matrix: Option<[f32; 16]>,
     pub mesh: Option<usize>,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
     pub rotation: Option<[f32; 4]>,
     pub scale: Option<[f32; 3]>,
     pub translation: Option<[f32; 3]>,
-    #[cfg(feature = "names")]
-    pub name: Option<String>,
     #[nserde(default)]
     pub extensions: E::NodeExtensions,
     #[nserde(default)]
@@ -304,10 +313,10 @@ pub enum NodeTransform {
 
 #[derive(Debug, DeJson, SerJson)]
 pub struct Mesh {
-    pub primitives: Vec<Primitive>,
-    pub weights: Option<Vec<f32>>,
     #[cfg(feature = "names")]
     pub name: Option<String>,
+    pub primitives: Vec<Primitive>,
+    pub weights: Option<Vec<f32>>,
 }
 
 #[derive(Debug, DeJson, SerJson)]
@@ -320,21 +329,16 @@ pub struct Primitive {
     pub targets: Option<Vec<Attributes>>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PrimitiveMode {
     Points,
     Lines,
     LineLoop,
     LineStrip,
+    #[default]
     Triangles,
     TriangleStrip,
     TriangleFan,
-}
-
-impl Default for PrimitiveMode {
-    fn default() -> Self {
-        Self::Triangles
-    }
 }
 
 impl DeJson for PrimitiveMode {
@@ -397,11 +401,11 @@ pub struct Attributes {
 
 #[derive(Debug, DeJson, SerJson, Clone)]
 pub struct Image {
+    #[nserde(rename = "bufferView")]
+    pub buffer_view: Option<usize>,
     pub uri: Option<String>,
     #[nserde(rename = "mimeType")]
     pub mime_type: Option<String>,
-    #[nserde(rename = "bufferView")]
-    pub buffer_view: Option<usize>,
     #[cfg(feature = "names")]
     pub name: Option<String>,
 }
@@ -419,13 +423,15 @@ pub struct Texture<E: Extensions> {
 #[derive(Debug, DeJson, SerJson)]
 pub struct BufferView<E: Extensions> {
     pub buffer: usize,
+    #[nserde(rename = "byteLength")]
+    pub byte_length: usize,
     #[nserde(rename = "byteOffset")]
     #[nserde(default)]
     pub byte_offset: usize,
-    #[nserde(rename = "byteLength")]
-    pub byte_length: usize,
     #[nserde(rename = "byteStride")]
     pub byte_stride: Option<usize>,
+    #[nserde(default)]
+    pub target: u32,
     #[cfg(feature = "names")]
     pub name: Option<String>,
     #[nserde(default)]
@@ -436,22 +442,22 @@ pub struct BufferView<E: Extensions> {
 pub struct Accessor {
     #[nserde(rename = "bufferView")]
     pub buffer_view: Option<usize>,
+    #[nserde(rename = "componentType")]
+    pub component_type: ComponentType,
+    pub count: usize,
+    pub sparse: Option<Sparse>,
+    // todo: these could be changed to enum { Int, Float }.
+    pub max: Option<Vec<f32>>,
+    pub min: Option<Vec<f32>>,
+    #[nserde(rename = "type")]
+    pub accessor_type: AccessorType,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
     #[nserde(rename = "byteOffset")]
     #[nserde(default)]
     pub byte_offset: usize,
-    #[nserde(rename = "componentType")]
-    pub component_type: ComponentType,
     #[nserde(default)]
     pub normalized: bool,
-    pub count: usize,
-    #[nserde(rename = "type")]
-    pub accessor_type: AccessorType,
-    pub sparse: Option<Sparse>,
-    // todo: these could be changed to enum { Int, Float }.
-    pub min: Option<Vec<f32>>,
-    pub max: Option<Vec<f32>>,
-    #[cfg(feature = "names")]
-    pub name: Option<String>,
 }
 
 impl Accessor {
@@ -581,6 +587,13 @@ impl AccessorType {
 
 #[derive(Debug, DeJson, SerJson, Clone)]
 pub struct Material<E: Extensions> {
+    #[nserde(rename = "alphaMode")]
+    #[nserde(default)]
+    pub alpha_mode: AlphaMode,
+    #[nserde(default)]
+    pub extensions: E::MaterialExtensions,
+    #[cfg(feature = "names")]
+    pub name: Option<String>,
     #[nserde(rename = "pbrMetallicRoughness")]
     #[nserde(default)]
     pub pbr_metallic_roughness: PbrMetallicRoughness<E>,
@@ -593,35 +606,23 @@ pub struct Material<E: Extensions> {
     #[nserde(rename = "emissiveFactor")]
     #[nserde(default)]
     pub emissive_factor: [f32; 3],
-    #[nserde(rename = "alphaMode")]
-    #[nserde(default)]
-    pub alpha_mode: AlphaMode,
     #[nserde(rename = "alphaCutoff")]
     #[nserde(default = "0.5")]
     pub alpha_cutoff: f32,
     #[nserde(rename = "doubleSided")]
     #[nserde(default)]
     pub double_sided: bool,
-    #[cfg(feature = "names")]
-    pub name: Option<String>,
-    #[nserde(default)]
-    pub extensions: E::MaterialExtensions,
 }
 
-#[derive(Debug, DeJson, SerJson, Clone, Copy)]
+#[derive(Default, Debug, DeJson, SerJson, Clone, Copy)]
 pub enum AlphaMode {
+    #[default]
     #[nserde(rename = "OPAQUE")]
     Opaque,
     #[nserde(rename = "MASK")]
     Mask,
     #[nserde(rename = "BLEND")]
     Blend,
-}
-
-impl Default for AlphaMode {
-    fn default() -> Self {
-        Self::Opaque
-    }
 }
 
 #[derive(Debug, DeJson, SerJson, Clone)]
@@ -819,10 +820,11 @@ impl SerJson for MinFilter {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SamplerWrap {
     ClampToEdge,
     MirroredRepeat,
+    #[default]
     Repeat,
 }
 
@@ -858,13 +860,7 @@ impl SerJson for SamplerWrap {
     }
 }
 
-impl Default for SamplerWrap {
-    fn default() -> Self {
-        Self::Repeat
-    }
-}
-
-#[derive(Debug, DeJson, SerJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct Camera {
     pub perspective: Option<CameraPerspective>,
     pub orthographic: Option<CameraOrthographic>,
@@ -901,9 +897,9 @@ pub enum CameraType {
 
 #[derive(Debug, DeJson, SerJson, Clone)]
 pub struct Scene {
-    pub nodes: Vec<usize>,
     #[cfg(feature = "names")]
     pub name: Option<String>,
+    pub nodes: Vec<usize>,
 }
 
 pub mod default_extensions {
