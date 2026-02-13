@@ -68,7 +68,7 @@ impl Extensions for () {
 }
 
 /// A parsed gltf document.
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Gltf<E: Extensions> {
     #[nserde(default)]
     pub images: Vec<Image>,
@@ -145,7 +145,7 @@ impl<E: Extensions> Gltf<E> {
     }
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Skin {
     #[nserde(rename = "inverseBindMatrices")]
     pub inverse_bind_matrices: Option<usize>,
@@ -155,7 +155,7 @@ pub struct Skin {
     pub name: Option<String>,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Animation {
     pub channels: Vec<Channel>,
     pub samplers: Vec<AnimationSampler>,
@@ -163,19 +163,19 @@ pub struct Animation {
     pub name: Option<String>,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Channel {
     pub sampler: usize,
     pub target: Target,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Target {
     pub node: Option<usize>,
     pub path: TargetPath,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct AnimationSampler {
     pub input: usize,
     #[nserde(default)]
@@ -183,7 +183,7 @@ pub struct AnimationSampler {
     pub output: usize,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub enum Interpolation {
     #[nserde(rename = "LINEAR")]
     Linear,
@@ -199,7 +199,7 @@ impl Default for Interpolation {
     }
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub enum TargetPath {
     #[nserde(rename = "translation")]
     Translation,
@@ -211,7 +211,7 @@ pub enum TargetPath {
     Weights,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Buffer<E: Extensions> {
     pub uri: Option<String>,
     #[nserde(rename = "byteLength")]
@@ -222,7 +222,7 @@ pub struct Buffer<E: Extensions> {
     pub extensions: E::BufferExtensions,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Node<E: Extensions> {
     pub camera: Option<usize>,
     #[nserde(default)]
@@ -277,7 +277,7 @@ pub enum NodeTransform {
     },
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Mesh {
     pub primitives: Vec<Primitive>,
     pub weights: Option<Vec<f32>>,
@@ -285,7 +285,7 @@ pub struct Mesh {
     pub name: Option<String>,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Primitive {
     pub attributes: Attributes,
     pub indices: Option<usize>,
@@ -352,7 +352,7 @@ impl SerJson for PrimitiveMode {
     }
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Attributes {
     #[nserde(rename = "POSITION")]
     pub position: Option<usize>,
@@ -370,7 +370,7 @@ pub struct Attributes {
     pub weights_0: Option<usize>,
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct Image {
     pub uri: Option<String>,
     #[nserde(rename = "mimeType")]
@@ -381,7 +381,7 @@ pub struct Image {
     pub name: Option<String>,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Texture<E: Extensions> {
     pub sampler: Option<usize>,
     pub source: Option<usize>,
@@ -391,7 +391,7 @@ pub struct Texture<E: Extensions> {
     pub extensions: E::TextureExtensions,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct BufferView<E: Extensions> {
     pub buffer: usize,
     #[nserde(rename = "byteOffset")]
@@ -407,7 +407,7 @@ pub struct BufferView<E: Extensions> {
     pub extensions: E::BufferViewExtensions,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Accessor {
     #[nserde(rename = "bufferView")]
     pub buffer_view: Option<usize>,
@@ -438,14 +438,14 @@ impl Accessor {
     }
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Sparse {
     pub count: usize,
     pub indices: SparseIndices,
     pub values: SparseValues,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct SparseIndices {
     #[nserde(rename = "bufferView")]
     pub buffer_view: usize,
@@ -456,7 +456,7 @@ pub struct SparseIndices {
     pub component_type: ComponentType,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct SparseValues {
     #[nserde(rename = "bufferView")]
     pub buffer_view: usize,
@@ -523,7 +523,7 @@ impl SerJson for ComponentType {
     }
 }
 
-#[derive(Debug, DeJson, PartialEq, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, PartialEq, Clone, Copy)]
 pub enum AccessorType {
     #[nserde(rename = "SCALAR")]
     Scalar,
@@ -554,7 +554,7 @@ impl AccessorType {
     }
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct Material<E: Extensions> {
     #[nserde(rename = "pbrMetallicRoughness")]
     #[nserde(default)]
@@ -583,7 +583,7 @@ pub struct Material<E: Extensions> {
     pub extensions: E::MaterialExtensions,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub enum AlphaMode {
     #[nserde(rename = "OPAQUE")]
     Opaque,
@@ -599,7 +599,7 @@ impl Default for AlphaMode {
     }
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct PbrMetallicRoughness<E: Extensions> {
     #[nserde(rename = "baseColorFactor")]
     #[nserde(default = "[1.0, 1.0, 1.0, 1.0]")]
@@ -650,7 +650,7 @@ pub struct NormalTextureInfo<E: Extensions> {
     pub extensions: E::TextureInfoExtensions,
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct OcclusionTextureInfo<E: Extensions> {
     pub index: usize,
     #[nserde(rename = "texCoord")]
@@ -662,7 +662,7 @@ pub struct OcclusionTextureInfo<E: Extensions> {
     pub extensions: E::TextureInfoExtensions,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson)]
 pub struct Sampler {
     #[nserde(rename = "magFilter")]
     pub mag_filter: Option<FilterMode>,
@@ -874,7 +874,7 @@ pub enum CameraType {
     Orthographic,
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct Scene {
     pub nodes: Vec<usize>,
     #[cfg(feature = "names")]
