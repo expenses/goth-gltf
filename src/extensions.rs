@@ -79,7 +79,7 @@ pub mod khr_lights_punctual {
         pub light: usize,
     }
 
-    #[derive(Debug, DeJson, SerJson, Clone, Copy)]
+    #[derive(Debug, DeJson, SerJson, Clone)]
     pub struct Light {
         #[nserde(default = "[1.0, 1.0, 1.0]")]
         pub color: [f32; 3],
@@ -87,6 +87,8 @@ pub mod khr_lights_punctual {
         pub intensity: f32,
         #[nserde(rename = "type")]
         pub ty: LightType,
+        #[cfg(feature = "names")]
+        pub name: Option<String>,
         pub spot: Option<LightSpot>,
     }
 
