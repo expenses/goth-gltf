@@ -42,18 +42,18 @@ pub mod extensions;
 #[cfg(feature = "primitive_reader")]
 pub mod primitive_reader;
 
-use nanoserde::DeJson;
+use nanoserde::{DeJson, SerJson};
 use std::fmt::Debug;
 
-pub trait Extensions: DeJson {
-    type RootExtensions: DeJson + Default + Debug + Clone;
-    type TextureExtensions: DeJson + Default + Debug + Clone;
-    type TextureInfoExtensions: DeJson + Default + Debug + Clone;
-    type MaterialExtensions: DeJson + Default + Debug + Clone;
-    type BufferExtensions: DeJson + Default + Debug + Clone;
-    type NodeExtensions: DeJson + Default + Debug + Clone;
-    type NodeExtras: DeJson + Default + Debug + Clone;
-    type BufferViewExtensions: DeJson + Default + Debug + Clone;
+pub trait Extensions: DeJson + SerJson {
+    type RootExtensions: DeJson + SerJson + Default + Debug + Clone;
+    type TextureExtensions: DeJson + SerJson + Default + Debug + Clone;
+    type TextureInfoExtensions: DeJson + SerJson + Default + Debug + Clone;
+    type MaterialExtensions: DeJson + SerJson + Default + Debug + Clone;
+    type BufferExtensions: DeJson + SerJson + Default + Debug + Clone;
+    type NodeExtensions: DeJson + SerJson + Default + Debug + Clone;
+    type NodeExtras: DeJson + SerJson + Default + Debug + Clone;
+    type BufferViewExtensions: DeJson + SerJson + Default + Debug + Clone;
 }
 
 impl Extensions for () {
@@ -599,7 +599,7 @@ impl<E: Extensions> Default for PbrMetallicRoughness<E> {
     }
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct TextureInfo<E: Extensions> {
     pub index: usize,
     #[nserde(rename = "texCoord")]
@@ -609,7 +609,7 @@ pub struct TextureInfo<E: Extensions> {
     pub extensions: E::TextureInfoExtensions,
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct NormalTextureInfo<E: Extensions> {
     pub index: usize,
     #[nserde(rename = "texCoord")]
@@ -723,7 +723,7 @@ impl DeJson for MinFilter {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SamplerWrap {
     ClampToEdge,
     MirroredRepeat,
@@ -757,7 +757,7 @@ impl Default for SamplerWrap {
     }
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct Camera {
     pub perspective: Option<CameraPerspective>,
     pub orthographic: Option<CameraOrthographic>,
@@ -767,7 +767,7 @@ pub struct Camera {
     pub name: Option<String>,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct CameraPerspective {
     pub yfov: f32,
     pub znear: f32,
@@ -776,7 +776,7 @@ pub struct CameraPerspective {
     pub aspect_ratio: Option<f32>,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct CameraOrthographic {
     pub xmag: f32,
     pub ymag: f32,
@@ -784,7 +784,7 @@ pub struct CameraOrthographic {
     pub znear: f32,
 }
 
-#[derive(Debug, DeJson)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy, PartialEq, Eq)]
 pub enum CameraType {
     #[nserde(rename = "perspective")]
     Perspective,
@@ -801,9 +801,9 @@ pub struct Scene {
 
 pub mod default_extensions {
     use crate::extensions;
-    use nanoserde::DeJson;
+    use nanoserde::{DeJson, SerJson};
 
-    #[derive(Debug, Default, Clone, Copy, DeJson)]
+    #[derive(Debug, Default, Clone, Copy, DeJson, SerJson)]
     pub struct Extensions;
 
     impl super::Extensions for Extensions {
@@ -817,19 +817,19 @@ pub mod default_extensions {
         type BufferViewExtensions = BufferViewExtensions;
     }
 
-    #[derive(Debug, DeJson, Default, Clone)]
+    #[derive(Debug, DeJson, SerJson, Default, Clone)]
     pub struct RootExtensions {
         #[nserde(rename = "KHR_lights_punctual")]
         pub khr_lights_punctual: Option<extensions::khr_lights_punctual::Root>,
     }
 
-    #[derive(Debug, DeJson, Default, Clone)]
+    #[derive(Debug, DeJson, SerJson, Default, Clone)]
     pub struct BufferExtensions {
         #[nserde(rename = "EXT_meshopt_compression")]
         pub ext_meshopt_compression: Option<extensions::ExtMeshoptCompressionBuffer>,
     }
 
-    #[derive(Debug, DeJson, Default, Clone)]
+    #[derive(Debug, DeJson, SerJson, Default, Clone)]
     pub struct NodeExtensions {
         #[nserde(rename = "EXT_mesh_gpu_instancing")]
         pub ext_mesh_gpu_instancing: Option<extensions::ExtMeshGpuInstancing>,
@@ -839,25 +839,25 @@ pub mod default_extensions {
         pub khr_lights_punctual: Option<extensions::khr_lights_punctual::Node>,
     }
 
-    #[derive(Debug, DeJson, Default, Clone)]
+    #[derive(Debug, DeJson, SerJson, Default, Clone)]
     pub struct NodeExtras {
         #[nserde(rename = "MSFT_screencoverage")]
         pub msft_screencoverage: Option<Vec<f32>>,
     }
 
-    #[derive(Debug, Default, DeJson, Clone)]
+    #[derive(Debug, DeJson, SerJson, Default, Clone)]
     pub struct TextureExtensions {
         #[nserde(rename = "KHR_texture_basisu")]
         pub khr_texture_basisu: Option<extensions::KhrTextureBasisu>,
     }
 
-    #[derive(Debug, DeJson, Default, Clone)]
+    #[derive(Debug, DeJson, SerJson, Default, Clone)]
     pub struct BufferViewExtensions {
         #[nserde(rename = "EXT_meshopt_compression")]
         pub ext_meshopt_compression: Option<extensions::ExtMeshoptCompression>,
     }
 
-    #[derive(Debug, DeJson, Default, Clone)]
+    #[derive(Debug, DeJson, SerJson, Default, Clone)]
     pub struct MaterialExtensions<E: super::Extensions> {
         #[nserde(rename = "KHR_materials_sheen")]
         pub khr_materials_sheen: Option<extensions::KhrMaterialsSheen<E>>,
@@ -873,7 +873,7 @@ pub mod default_extensions {
         pub khr_materials_transmission: Option<extensions::KhrMaterialsTransmission<E>>,
     }
 
-    #[derive(Debug, DeJson, Default, Clone, Copy)]
+    #[derive(Debug, DeJson, SerJson, Default, Clone, Copy)]
     pub struct TextureInfoExtensions {
         #[nserde(rename = "KHR_texture_transform")]
         pub khr_texture_transform: Option<extensions::KhrTextureTransform>,

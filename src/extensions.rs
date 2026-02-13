@@ -1,12 +1,12 @@
 use crate::{Extensions, TextureInfo};
-use nanoserde::DeJson;
+use nanoserde::{DeJson, SerJson};
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct KhrTextureBasisu {
     pub source: usize,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct KhrTextureTransform {
     #[nserde(default)]
     pub offset: [f32; 2],
@@ -19,7 +19,7 @@ pub struct KhrTextureTransform {
     pub tex_coord: usize,
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct KhrMaterialsSheen<E: Extensions> {
     #[nserde(rename = "sheenColorFactor")]
     #[nserde(default)]
@@ -33,17 +33,17 @@ pub struct KhrMaterialsSheen<E: Extensions> {
     pub sheen_roughness_texture: Option<TextureInfo<E>>,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct KhrMaterialsEmissiveStrength {
     #[nserde(rename = "emissiveStrength")]
     #[nserde(default = "1.0")]
     pub emissive_strength: f32,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct KhrMaterialsUnlit {}
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct KhrMaterialsSpecular<E: Extensions> {
     #[nserde(rename = "specularFactor")]
     #[nserde(default = "1.0")]
@@ -56,7 +56,7 @@ pub struct KhrMaterialsSpecular<E: Extensions> {
     pub specular_color_texture: Option<TextureInfo<E>>,
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct KhrMaterialsTransmission<E: Extensions> {
     #[nserde(rename = "transmissionFactor")]
     #[nserde(default = "1.0")]
@@ -66,20 +66,20 @@ pub struct KhrMaterialsTransmission<E: Extensions> {
 }
 
 pub mod khr_lights_punctual {
-    use nanoserde::DeJson;
+    use nanoserde::{DeJson, SerJson};
 
-    #[derive(Debug, DeJson, Clone)]
+    #[derive(Debug, DeJson, SerJson, Clone)]
     pub struct Root {
         #[nserde(default)]
         pub lights: Vec<Light>,
     }
 
-    #[derive(Debug, DeJson, Clone)]
+    #[derive(Debug, DeJson, SerJson, Clone, Copy)]
     pub struct Node {
         pub light: usize,
     }
 
-    #[derive(Debug, DeJson, Clone, Copy)]
+    #[derive(Debug, DeJson, SerJson, Clone, Copy)]
     pub struct Light {
         #[nserde(default = "[1.0, 1.0, 1.0]")]
         pub color: [f32; 3],
@@ -90,7 +90,7 @@ pub mod khr_lights_punctual {
         pub spot: Option<LightSpot>,
     }
 
-    #[derive(Debug, DeJson, Clone, Copy)]
+    #[derive(Debug, DeJson, SerJson, Clone, Copy)]
     pub enum LightType {
         #[nserde(rename = "point")]
         Point,
@@ -100,7 +100,7 @@ pub mod khr_lights_punctual {
         Spot,
     }
 
-    #[derive(Debug, DeJson, Clone, Copy)]
+    #[derive(Debug, DeJson, SerJson, Clone, Copy)]
     pub struct LightSpot {
         #[nserde(rename = "innerConeAngle")]
         #[nserde(default)]
@@ -111,13 +111,13 @@ pub mod khr_lights_punctual {
     }
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct KhrMaterialsIor {
     #[nserde(default = "1.5")]
     pub ior: f32,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct ExtMeshoptCompression {
     pub buffer: usize,
     #[nserde(rename = "byteOffset")]
@@ -133,7 +133,7 @@ pub struct ExtMeshoptCompression {
     pub filter: CompressionFilter,
 }
 
-#[derive(Debug, DeJson, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, PartialEq, Eq, Clone, Copy)]
 pub enum CompressionMode {
     #[nserde(rename = "ATTRIBUTES")]
     Attributes,
@@ -143,7 +143,7 @@ pub enum CompressionMode {
     Indices,
 }
 
-#[derive(Debug, DeJson, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, PartialEq, Eq, Clone, Copy)]
 pub enum CompressionFilter {
     #[nserde(rename = "NONE")]
     None,
@@ -161,18 +161,18 @@ impl Default for CompressionFilter {
     }
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct ExtMeshoptCompressionBuffer {
     #[nserde(default)]
     pub fallback: bool,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct ExtMeshGpuInstancing {
     pub attributes: ExtMeshGpuInstancingAttributes,
 }
 
-#[derive(Debug, DeJson, Clone, Copy)]
+#[derive(Debug, DeJson, SerJson, Clone, Copy)]
 pub struct ExtMeshGpuInstancingAttributes {
     #[nserde(rename = "ROTATION")]
     pub rotation: usize,
@@ -182,7 +182,7 @@ pub struct ExtMeshGpuInstancingAttributes {
     pub translation: usize,
 }
 
-#[derive(Debug, DeJson, Clone)]
+#[derive(Debug, DeJson, SerJson, Clone)]
 pub struct MsftLod {
     pub ids: Vec<usize>,
 }
