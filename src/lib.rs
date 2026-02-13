@@ -133,6 +133,31 @@ impl<E: Extensions> Gltf<E> {
         Ok((json, binary_buffer))
     }
 
+    pub fn write_to_glb<W: std::io::Write>(
+        &self,
+        bytes: &[u8],
+        mut writer: W,
+    ) -> std::io::Result<()> {
+        writer.write_all(b"glTF")?;
+        let version = 2_u32;
+        writer.write_all(&version.to_le_bytes())?;
+        let string = self.serialize_json();
+        let header_len = 4 + 4 + 4;
+        let json_chunk_len = 4 + 4 + string.len() as u32;
+        let binary_chunk_len = 4 + 4 + bytes.len() as u32;
+        let total_len = header_len + json_chunk_len + binary_chunk_len;
+        writer.write_all(&total_len.to_le_bytes())?;
+
+        writer.write_all(&(string.len() as u32).to_le_bytes())?;
+        writer.write_all(b"JSON")?;
+        writer.write_all(string.as_bytes())?;
+
+        writer.write_all(&(bytes.len() as u32).to_le_bytes())?;
+        writer.write_all(b"BIN\0")?;
+        writer.write_all(bytes)?;
+        Ok(())
+    }
+
     pub fn from_json_bytes(bytes: &[u8]) -> Result<Self, nanoserde::DeJsonErr> {
         match std::str::from_utf8(bytes) {
             Ok(string) => Self::from_json_string(string),
