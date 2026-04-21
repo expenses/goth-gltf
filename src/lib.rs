@@ -24,6 +24,7 @@
 //! - `KHR_materials_emissive_strength`
 //! - `KHR_materials_ior`
 //! - `KHR_materials_sheen`
+//! - `KHR_materials_specular`
 //! - `KHR_materials_unlit`
 //! - `KHR_texture_basisu`
 //! - `KHR_texture_transform`
