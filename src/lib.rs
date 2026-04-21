@@ -38,9 +38,6 @@
 #![allow(clippy::question_mark)]
 
 pub mod extensions;
-/// Basic support for reading primitive data from buffer views and accessors.
-#[cfg(feature = "primitive_reader")]
-pub mod primitive_reader;
 
 use nanoserde::{DeJson, SerJson};
 use std::fmt::Debug;
