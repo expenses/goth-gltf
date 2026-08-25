@@ -58,7 +58,7 @@ fn main() {
 
     write_val(indices.count as _);
     write_val(positions.count as _);
-    output.write_all(indices_slice);
-    output.write_all(positions_slice);
-    output.write_all(normals_slice);
+    output.write_all(indices_slice).unwrap();
+    output.write_all(positions_slice).unwrap();
+    output.write_all(normals_slice).unwrap();
 }
