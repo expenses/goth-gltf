@@ -29,6 +29,7 @@
 //! - `KHR_texture_basisu`
 //! - `KHR_texture_transform`
 //! - `KHR_materials_transmission`
+//! - `KHR_materials_variants`
 //! - `EXT_mesh_gpu_instancing`
 //! - `EXT_meshopt_compression`
 //! - `MSFT_lod`
@@ -52,6 +53,7 @@ pub trait Extensions: DeJson + SerJson {
     type NodeExtensions: DeJson + SerJson + Default + Debug + Clone;
     type NodeExtras: DeJson + SerJson + Default + Debug + Clone;
     type BufferViewExtensions: DeJson + SerJson + Default + Debug + Clone;
+    type PrimitiveExtensions: DeJson + SerJson + Default + Debug + Clone;
 }
 
 impl Extensions for () {
@@ -63,6 +65,7 @@ impl Extensions for () {
     type NodeExtensions = ();
     type NodeExtras = ();
     type BufferViewExtensions = ();
+    type PrimitiveExtensions = ();
 }
 
 /// A parsed gltf document.
@@ -86,7 +89,7 @@ pub struct Gltf<E: Extensions> {
     #[nserde(default)]
     pub materials: Vec<Material<E>>,
     #[nserde(default)]
-    pub meshes: Vec<Mesh>,
+    pub meshes: Vec<Mesh<E>>,
     #[nserde(default)]
     pub textures: Vec<Texture<E>>,
     #[nserde(default)]
@@ -310,21 +313,23 @@ pub enum NodeTransform {
 }
 
 #[derive(Debug, DeJson, SerJson)]
-pub struct Mesh {
+pub struct Mesh<E: Extensions> {
     #[cfg(feature = "names")]
     pub name: Option<String>,
-    pub primitives: Vec<Primitive>,
+    pub primitives: Vec<Primitive<E>>,
     pub weights: Option<Vec<f32>>,
 }
 
 #[derive(Debug, DeJson, SerJson)]
-pub struct Primitive {
+pub struct Primitive<E: Extensions> {
     pub attributes: Attributes,
     pub indices: Option<usize>,
     pub material: Option<usize>,
     #[nserde(default)]
     pub mode: PrimitiveMode,
     pub targets: Option<Vec<Attributes>>,
+    #[nserde(default)]
+    pub extensions: E::PrimitiveExtensions,
 }
 
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
@@ -916,12 +921,21 @@ pub mod default_extensions {
         type NodeExtensions = NodeExtensions;
         type NodeExtras = NodeExtras;
         type BufferViewExtensions = BufferViewExtensions;
+        type PrimitiveExtensions = PrimitiveExtensions;
+    }
+
+    #[derive(Debug, DeJson, SerJson, Default, Clone)]
+    pub struct PrimitiveExtensions {
+        #[nserde(rename = "KHR_materials_variants")]
+        pub khr_materials_variants: Option<extensions::khr_materials_variants::Primitive>,
     }
 
     #[derive(Debug, DeJson, SerJson, Default, Clone)]
     pub struct RootExtensions {
         #[nserde(rename = "KHR_lights_punctual")]
         pub khr_lights_punctual: Option<extensions::khr_lights_punctual::Root>,
+        #[nserde(rename = "KHR_materials_variants")]
+        pub khr_materials_variants: Option<extensions::khr_materials_variants::Root>,
     }
 
     #[derive(Debug, DeJson, SerJson, Default, Clone)]

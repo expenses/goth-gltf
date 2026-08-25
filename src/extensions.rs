@@ -183,3 +183,28 @@ pub struct ExtMeshGpuInstancingAttributes {
 pub struct MsftLod {
     pub ids: Vec<usize>,
 }
+
+pub mod khr_materials_variants {
+    use nanoserde::{DeJson, SerJson};
+
+    #[derive(Debug, DeJson, SerJson, Clone)]
+    pub struct Root {
+        pub variants: Vec<RootVariant>,
+    }
+
+    #[derive(Debug, DeJson, SerJson, Clone)]
+    pub struct RootVariant {
+        pub name: String,
+    }
+
+    #[derive(Debug, DeJson, SerJson, Clone)]
+    pub struct Primitive {
+        pub mappings: Vec<Mapping>,
+    }
+
+    #[derive(Debug, DeJson, SerJson, Clone)]
+    pub struct Mapping {
+        material: usize,
+        variants: Vec<usize>,
+    }
+}
