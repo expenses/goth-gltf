@@ -218,9 +218,24 @@ pub struct AnimationSampler {
 
 #[derive(Debug, DeJson, SerJson)]
 pub struct Asset {
-    #[cfg(feature = "names")]
-    generator: Option<String>,
-    version: String,
+    pub generator: Option<String>,
+    pub version: String,
+}
+
+impl Default for Asset {
+    fn default() -> Self {
+        Asset {
+            generator: Some(env!("CARGO_PKG_NAME").into()),
+            version: env!("CARGO_PKG_VERSION").into(),
+        }
+    }
+}
+
+#[test]
+fn sanity_check_asset_default() {
+    let asset = Asset::default();
+    assert_eq!(asset.generator.as_deref(), Some("goth-gltf"));
+    assert!(asset.version.starts_with("0."));
 }
 
 #[derive(Default, Debug, DeJson, SerJson, Clone, Copy)]
