@@ -141,6 +141,10 @@ impl<E: Extensions> Gltf<E> {
         Ok((json, binary_buffer))
     }
 
+    fn pad_len(len: u32) -> u32 {
+        (4 - (len % 4)) % 4
+    }
+
     pub fn write_to_glb<W: std::io::Write>(
         &self,
         bytes: &[u8],
@@ -153,16 +157,25 @@ impl<E: Extensions> Gltf<E> {
         let header_len = 4 + 4 + 4;
         let json_chunk_len = 4 + 4 + string.len() as u32;
         let binary_chunk_len = 4 + 4 + bytes.len() as u32;
-        let total_len = header_len + json_chunk_len + binary_chunk_len;
-        writer.write_all(&total_len.to_le_bytes())?;
+        let json_padding = Self::pad_len(json_chunk_len);
+        let binary_padding = Self::pad_len(binary_chunk_len);
 
-        writer.write_all(&(string.len() as u32).to_le_bytes())?;
+        let total_len =
+            header_len + json_chunk_len + binary_chunk_len + json_padding + binary_padding;
+
+        //NOTE: total_len and the header are all u32 i.e. already 4byte aligned, so we can skip them in the padding calculation...
+        writer.write_all(&total_len.to_le_bytes())?;
+        writer.write_all(&(string.len() as u32 + json_padding).to_le_bytes())?;
         writer.write_all(b"JSON")?;
         writer.write_all(string.as_bytes())?;
+        //Padding after the json-chunk
+        writer.write_all(&vec![b' '; json_padding as usize])?;
 
-        writer.write_all(&(bytes.len() as u32).to_le_bytes())?;
+        writer.write_all(&(bytes.len() as u32 + binary_padding).to_le_bytes())?;
         writer.write_all(b"BIN\0")?;
         writer.write_all(bytes)?;
+        //binary padding with 0
+        writer.write_all(&vec![0u8; binary_padding as usize])?;
         Ok(())
     }
 
@@ -267,7 +280,7 @@ pub struct Buffer<E: Extensions> {
     pub extensions: E::BufferExtensions,
 }
 
-#[derive(Debug, DeJson, SerJson)]
+#[derive(Debug, DeJson, SerJson, Default)]
 pub struct Node<E: Extensions> {
     pub camera: Option<usize>,
     #[nserde(default)]
