@@ -69,7 +69,7 @@ impl Extensions for () {
 }
 
 /// A parsed gltf document.
-#[derive(Debug, DeJson, SerJson)]
+#[derive(Debug, DeJson, SerJson, Default)]
 pub struct Gltf<E: Extensions> {
     pub asset: Asset,
     #[cfg(feature = "names")]
@@ -272,7 +272,7 @@ pub struct Buffer<E: Extensions> {
     pub extensions: E::BufferExtensions,
 }
 
-#[derive(Debug, DeJson, SerJson)]
+#[derive(Debug, DeJson, SerJson, Default)]
 pub struct Node<E: Extensions> {
     pub camera: Option<usize>,
     #[nserde(default)]
