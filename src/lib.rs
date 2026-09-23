@@ -69,7 +69,7 @@ impl Extensions for () {
 }
 
 /// A parsed gltf document.
-#[derive(Debug, DeJson, SerJson)]
+#[derive(Debug, DeJson, SerJson, Default)]
 pub struct Gltf<E: Extensions> {
     pub asset: Asset,
     #[cfg(feature = "names")]
@@ -219,8 +219,18 @@ pub struct AnimationSampler {
 #[derive(Debug, DeJson, SerJson)]
 pub struct Asset {
     #[cfg(feature = "names")]
-    generator: Option<String>,
-    version: String,
+    pub generator: Option<String>,
+    pub version: String,
+}
+
+impl Default for Asset {
+    fn default() -> Self {
+        Asset {
+            #[cfg(feature = "names")]
+            generator: Some("goth-gltf".to_owned()),
+            version: "2.0".to_owned(),
+        }
+    }
 }
 
 #[derive(Default, Debug, DeJson, SerJson, Clone, Copy)]
